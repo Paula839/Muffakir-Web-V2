@@ -236,7 +236,7 @@ _Tip:_ Use tools such as [Swagger Editor](https://editor.swagger.io/) to create 
 
 ### System Diagram
 
-### +-------------------------+ HTTPS +-------------------------+ | | <------------------->| | | Frontend Client | | API Server | | (Browser/Mobile App) | | (Authentication, Chat, | | | | User Management) | +-------------------------+ +------------+------------+ | | Database Queries v +-------------------------------------+ | Database | | (User Profiles, Chat Histories, etc.)| +-------------------------------------+ | | (Optional: Caching) v +-------------------------------------+ | Cache | | (e.g., Redis) | +-------------------------------------+
++-------------------------+ HTTPS +-------------------------+ | | <------------------->| | | Frontend Client | | API Server | | (Browser/Mobile App) | | (Authentication, Chat, | | | | User Management) | +-------------------------+ +------------+------------+ | | Database Queries v +-------------------------------------+ | Database | | (User Profiles, Chat Histories, etc.)| +-------------------------------------+ | | (Optional: Caching) v +-------------------------------------+ | Cache | | (e.g., Redis) | +-------------------------------------+
 
 ---
 
