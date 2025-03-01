@@ -41,7 +41,7 @@ function HomePage() {
                 <Link href="/test" className="primary-button">
                     {translations[lang].test}
                 </Link>
-                <Link href="/signin" className="secondary-button">
+                <Link href={`http://localhost:3000/auth/google`}  className="secondary-button">
                     {translations[lang].signIn}
                 </Link>
             </div>

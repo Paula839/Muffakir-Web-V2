@@ -9,6 +9,7 @@ import Link from "next/link";
 import UserProfile from "./UserProfile";
 import { PiStudentBold } from "react-icons/pi";
 import React from "react";
+import { wsClient } from '../app/lib/api';
 
 type Message = {
   id: number;
@@ -46,7 +47,6 @@ function ChatPage() {
     e.preventDefault();
     const text = inputText.trim();
     if (!text) return;
-
     // Disable send button immediately
     setIsSending(true);
 
@@ -106,6 +106,26 @@ function ChatPage() {
         });
       }, typingSpeed);
     }, 1000);
+
+
+    const ws = wsClient('/ws');
+    
+    ws.onmessage = (event) => {
+      // Handle incoming messages
+      console.log('Received:', event.data);
+    };
+
+    const sendMessage = (message: string) => {
+      ws.send(JSON.stringify({
+        message,
+        resources: true,
+        search: true
+      }));
+    };
+
+    sendMessage(text);  
+    return () => ws.close();
+
   };
 
   // Cancel the AI response typing without deleting the message
@@ -132,6 +152,27 @@ function ChatPage() {
     localStorage.setItem('lang', newLang);
     document.documentElement.setAttribute('lang', newLang);
   };
+
+
+  // useEffect(() => {
+  //   const ws = wsClient('/ws');
+    
+  //   ws.onmessage = (event) => {
+  //     // Handle incoming messages
+  //     console.log('Received:', event.data);
+  //   };
+
+  //   const sendMessage = (message: string) => {
+  //     ws.send(JSON.stringify({
+  //       message,
+  //       resources: true,
+  //       search: true
+  //     }));
+  //   };
+
+  //   return () => ws.close();
+  // }, []);
+
 
   return (
     <main className="container">
