@@ -6,6 +6,7 @@ import translations from "../translations/translations";
 import { useEffect, useState } from "react";
 import UserProfile from "../components/UserProfile";
 import React from "react";
+import ProfileDropdown from "./ProfileDropdown";
 
 type Question = {
   id: number;
@@ -91,7 +92,7 @@ function TestPage() {
     <main className='container'>
       <ThemeToggle />
       <LanguageToggle lang={lang} onToggle={handleLanguageChange} />
-      <UserProfile guest={translations[lang].guest}/>
+      <ProfileDropdown />
 
       <div className="test-container">
         <Link href="/" className="title-link">

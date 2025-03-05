@@ -6,9 +6,32 @@ import translations from "../translations/translations";
 import { useEffect, useState } from "react";
 import UserProfile from "./UserProfile";
 import React from "react";
+import { useUser } from "../context/UserContext";
+import ProfileDropdown from "./ProfileDropdown";
+
 
 function HomePage() {
     const [lang, setLang] = useState<'en' | 'ar'>('en');
+    const { user, setUser } = useUser();
+
+    useEffect(() => {
+        // Fetch user info from backend using the token in the cookie
+        const fetchUser = async () => {
+            try {
+                const response = await fetch("http://localhost:8000/api/user/me", {
+                    credentials: "include", // Ensures cookies are sent with the request
+                });
+                if (!response.ok) {
+                    throw new Error("Network response was not ok");
+                }
+                const data = await response.json();
+                setUser(data);
+            } catch (error) {
+                console.error("Error fetching user data:", error);
+            }
+        };
+        fetchUser();
+    }, [setUser]);
 
     useEffect(() => {
         const savedLang = localStorage.getItem('lang') === 'ar' ? 'ar' : 'en';
@@ -31,7 +54,10 @@ function HomePage() {
     return (
         <main className="container">
             <ThemeToggle />
-            <UserProfile guest={translations[lang].guest}/>
+           
+
+            <ProfileDropdown />
+
             <LanguageToggle lang={lang} onToggle={handleLanguageChange} />
             <h1 className="title">{translations[lang].welcome}</h1>
             <div className="button-group">
@@ -41,12 +67,11 @@ function HomePage() {
                 <Link href="/test" className="primary-button">
                     {translations[lang].test}
                 </Link>
-                <Link href={`http://localhost:3000/auth/google`}  className="secondary-button">
+                <Link href={`http://localhost:8000/api/user/auth/google`} className="secondary-button">
                     {translations[lang].signIn}
                 </Link>
             </div>
         </main>
-        
     );
 }
 

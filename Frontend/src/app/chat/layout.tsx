@@ -4,6 +4,7 @@ import "../globals.css";
 import "./chat.css";
 import React from "react";
 import { RouteProgress } from "../../components/RouteProgress";
+import { UserProvider } from "../../context/UserContext";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -29,8 +30,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-       <RouteProgress  />
-        {children}
+        <UserProvider>
+          <RouteProgress />
+          {children}
+        </UserProvider>
 
       </body>
     </html>

@@ -5,6 +5,9 @@ from Routes.chat_router import chatRouter
 from Routes.test_router import testRouter
 from Routes.user_router import userRouter
 
+from dotenv import load_dotenv
+load_dotenv()
+
 app = FastAPI()
 
 app.add_middleware(
