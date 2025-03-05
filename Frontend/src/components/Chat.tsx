@@ -27,6 +27,8 @@ function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  
+
   useEffect(() => {
     const savedLang = localStorage.getItem('lang') === 'ar' ? 'ar' : 'en';
     setLang(savedLang);
@@ -121,9 +123,45 @@ function ChatPage() {
       }, typingSpeed);
   
     } catch (error) {
-      console.error("Error:", error);
-      setMessages(prev => prev.filter(msg => msg.id !== thinkingMessageId));
-      setIsSending(false);
+      console.error("Error", error);
+      const fullText = "يوجد مشكلة في السرفر"
+      setMessages(prev => prev.map(msg => 
+        msg.id === thinkingMessageId ? {
+          ...msg,
+          isThinking: false,
+          isTyping: true,
+          text: ''
+        } : msg
+      ));
+  
+      // Start typing effect
+      let index = 0;
+      const baseSpeed = 150;
+      const speedFactor = Math.max(1, Math.log(fullText.length));
+      const typingSpeed = baseSpeed / speedFactor;
+  
+      typingIntervalRef.current = setInterval(() => {
+        setMessages(prev => prev.map(msg => {
+          if (msg.id === thinkingMessageId) {
+            const newText = fullText.substring(0, index + 1);
+            return {
+              ...msg,
+              text: newText,
+              isTyping: index + 1 < fullText.length,
+            };
+          }
+          return msg;
+        }));
+        index++;
+        if (index >= fullText.length) {
+          clearInterval(typingIntervalRef.current!);
+          typingIntervalRef.current = null;
+          setIsSending(false);
+        }
+      }, typingSpeed);
+
+      // setMessages(prev => prev.filter(msg => msg.id !== thinkingMessageId));
+      // setIsSending(false);
     }
   };
   // Cancel the AI response typing without deleting the message

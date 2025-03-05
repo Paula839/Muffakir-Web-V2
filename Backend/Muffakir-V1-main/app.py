@@ -30,8 +30,9 @@ def initialize_rag_manager():
     """Initialize the RAG pipeline manager with memory support."""
 
     load_dotenv()
-    embedding_model_name = os.getenv("EMBEDDING_MODEL_NAME")
-    
+    embedding_model_name = 'mohamed2811/Muffakir_Embedding'
+    # print("SURE? ", embedding_model_name)
+    # print("SURE2? ", os.path.join(os.path.dirname(os.path.abspath(__file__)), "DB"))
     llm_provider = LLMProvider(
         provider_name="together",
         temperature=0,
@@ -51,7 +52,7 @@ def initialize_rag_manager():
     )
     
     return RAGPipelineManager(
-        db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "DB"),
+        db_path = r"D:\College\Level 4\Graduation Project\Muffakir-Web-V4\Backend\Muffakir-V1-main\DB",
         model_name=embedding_model_name,
         query_transformer=query_transformer,
         llm_provider=llm_provider,

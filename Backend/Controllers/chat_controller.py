@@ -11,14 +11,24 @@ sys.path.append(TARGET_DIR)
 from app import get_rag_manager 
 
 def send_message_controller(body):
+    # return {"response" : "Hello, I am Muffakir. How can I help you?"}
     try:
-        user_request = body["message"]
-        print(user_request, flush=True)
-        response = get_rag_manager().generate_answer(user_request)
+        rag_manager = get_rag_manager()
+        message_request = body["message"]
+        # documents_request = body["documents"]
+
+        response = rag_manager.generate_answer(message_request)
         bot_response = response["answer"]
-        return {"response": bot_response}
+        documents_response = []
+        # if documents_request :
+            # documents_response = response["source_metadata"]
+        return {
+            "response": bot_response,
+            # "documents": documents_response
+            }
     except Exception as e:
-        return {"Error", (f"Error generating response: {e}")}
+        print("WHAT THE ", flush=True)
+        return {"response", (f"Error generating response: {e}")}
 
 
 
@@ -26,5 +36,6 @@ def get_history_controller(request: Request):
     return {"message": "Chat history"}
 
 def save_history_controller(request: Request):
+
 
     return {"message": "Chat history saved"}
