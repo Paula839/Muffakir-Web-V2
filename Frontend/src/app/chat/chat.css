@@ -236,3 +236,188 @@
   transform: translateX(0);
   opacity: 1;
 }
+
+/* Documents Panel */
+.documents-panel {
+  position: fixed;
+  top: 0;
+  right: -300px;
+  width: 300px;
+  height: 100vh;
+  background: var(--button-hover-bg);
+  padding: 1rem;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease-in-out;
+  opacity: 0.3;
+  z-index: 999;
+  overflow-y: auto;
+}
+
+.documents-panel.active {
+  right: 0;
+  opacity: 0.5;
+}
+
+.documents-panel.hovered {
+  opacity: 1 !important;
+  box-shadow: -2px 0 15px rgba(0, 0, 0, 0.2);
+}
+
+.documents-edge-trigger {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 20px;
+  height: 100vh;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.documents-edge-trigger.active {
+  opacity: 1;
+}
+
+.documents-list {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.document-item {
+  padding: 0.8rem;
+  background: var(--background-color);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  opacity: 0.9;
+  transition: transform 0.2s ease;
+}
+
+.document-item:hover {
+  transform: translateX(-5px);
+  opacity: 1;
+  cursor: pointer;
+}
+
+
+/* Documents Panel */
+.documents-panel {
+  position: fixed;
+  top: 0;
+  right: -300px;
+  width: 300px;
+  height: 100vh;
+  background: var(--button-hover-bg);
+  padding: 1.5rem;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease-in-out;
+  opacity: 0;
+  z-index: 999;
+  overflow-y: auto;
+}
+
+.documents-panel.visible {
+  right: 0;
+  opacity: 0.3;
+}
+
+.documents-panel:hover {
+  opacity: 1 !important;
+  box-shadow: -2px 0 15px rgba(0, 0, 0, 0.2);
+}
+
+.documents-list {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.document-item {
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.document-item:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateX(-5px);
+  cursor: pointer;
+}
+
+/* Documents button active state */
+.documents-button.active {
+  background-color: var(--primary-color);
+  color: black;
+}
+
+/* Document Item */
+.document-item {
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 0.5rem;
+}
+
+.document-item:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.document-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.toggle-icon {
+  font-size: 0.8rem;
+  margin-left: 1rem;
+  transition: transform 0.2s ease;
+}
+
+.document-item.expanded .toggle-icon {
+  transform: rotate(180deg);
+}
+
+.document-content {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Limit content height and add scroll */
+.document-content {
+  max-height: 200px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+/* Scrollbar styling */
+.document-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.document-content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.document-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+.document-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}

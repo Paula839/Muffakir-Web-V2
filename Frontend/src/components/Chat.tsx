@@ -9,6 +9,8 @@ import Link from "next/link";
 import UserProfile from "./UserProfile";
 import { PiStudentBold } from "react-icons/pi";
 import React from "react";
+import { useUser } from "../context/UserContext";
+import ProfileDropdown from "./ProfileDropdown";
 
 type Message = {
   id: number;
@@ -19,6 +21,12 @@ type Message = {
   isThinking: boolean;
 };
 
+type DocumentItem = {
+  title: string;
+  content: string;
+  expanded: boolean;
+};
+
 function ChatPage() {
   const [lang, setLang] = useState<'en' | 'ar'>('en');
   const [messages, setMessages] = useState<Message[]>([]);
@@ -26,7 +34,49 @@ function ChatPage() {
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [documents, setDocuments] = useState(false);
+  const [documentsData, setDocumentsData] = useState<DocumentItem[]>([]);
+  const [panelHovered, setPanelHovered] = useState(false);
+  const { user, setUser } = useUser(); 
 
+    useEffect(() => {
+        // Fetch user info from backend using the token in the cookie
+        const fetchUser = async () => {
+            try {
+                const response = await fetch("http://localhost:8000/api/user/me", {
+                    credentials: "include", // Ensures cookies are sent with the request
+                });
+                if (!response.ok) {
+                    throw new Error("Network response was not ok");
+                }
+                const data = await response.json();
+                setUser(data);
+            } catch (error) {
+                console.error("Error fetching user data:", error);
+            }
+        };
+        fetchUser();
+    }, [setUser]);
+
+    useEffect(() => {
+        if (user) {
+            localStorage.setItem("user", JSON.stringify(user));
+        } else {
+            localStorage.removeItem("user");
+        }
+    }, [user]);
+
+
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const isNearRightEdge = window.innerWidth - e.clientX < 50;
+      setPanelHovered(isNearRightEdge && documents);
+    };
+  
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [documents]);
   
 
   useEffect(() => {
@@ -44,6 +94,12 @@ function ChatPage() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  const toggleDocument = (index: number) => {
+    setDocumentsData(prev => prev.map((doc, i) => 
+      i === index ? { ...doc, expanded: !doc.expanded } : doc
+    ));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,13 +135,22 @@ function ChatPage() {
       const response = await fetch("http://localhost:8000/api/chat/message", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text }),
+        body: JSON.stringify({
+          message: text,
+          documents: documents // Use local state instead of DOM attribute
+        }),
       });
   
       if (!response.ok) throw new Error("Network response was not ok");
       const data = await response.json();
       const fullText = data.response;
-  
+      setDocumentsData(
+        data.documents.map((doc: string[]) => ({
+          title: doc[0],
+          content: doc[1],
+          expanded: false
+        }))
+      );
       // Convert thinking message to typing message
       setMessages(prev => prev.map(msg => 
         msg.id === thinkingMessageId ? {
@@ -195,8 +260,7 @@ function ChatPage() {
     <main className="container">
       <ThemeToggle />
       <LanguageToggle lang={lang} onToggle={handleLanguageChange} />
-      <UserProfile guest={translations[lang].guest} />
-
+      <ProfileDropdown />
       <div className="chat-container">
         <Link href="/" className="title-link">
           <h1 className="title">{translations[lang].welcome}</h1>
@@ -246,10 +310,51 @@ function ChatPage() {
               className="chat-input"
             />
             {/* Pass the isSending state and cancel handler */}
-            <ButtonHandler lang={lang} isSending={isSending} onCancel={handleCancelSending} />
+            <ButtonHandler
+              lang={lang}
+              isSending={isSending}
+              onCancel={handleCancelSending}
+              documents={documents}
+              onDocumentsToggle={() => setDocuments(!documents)}
+            />
           </form>
         </div>
       </div>
+
+
+      <div 
+        className={`documents-edge-trigger ${documents ? 'active' : ''}`}
+        onMouseEnter={() => setPanelHovered(true)}
+      />
+
+    <div 
+      className={`documents-panel ${documents ? 'visible' : ''}`}
+      style={{ opacity: panelHovered ? 1 : 0.3 }}
+    >
+      <h3>{translations[lang].documents}</h3>
+      <div className="documents-list">
+          {documentsData.map((doc, index) => (
+            <div 
+              key={index} 
+              className={`document-item ${doc.expanded ? 'expanded' : ''}`}
+              onClick={() => toggleDocument(index)}
+            >
+              <div className="document-header">
+                <h4>{doc.title}</h4>
+                <span className="toggle-icon">
+                  {doc.expanded ? '▲' : '▼'}
+                </span>
+              </div>
+              {doc.expanded && (
+                <div className="document-content">
+                  {doc.content}
+                </div>
+              )}
+            </div>
+          ))}
+</div>
+    </div>
+
     </main>
   );
 }
