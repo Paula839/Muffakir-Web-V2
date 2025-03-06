@@ -13,7 +13,7 @@ import { useUser } from "../context/UserContext";
 import ProfileDropdown from "./ProfileDropdown";
 
 type Message = {
-  id: number;
+  id: string | number;
   text: string;
   isUser: boolean;
   timestamp: Date;
@@ -37,47 +37,68 @@ function ChatPage() {
   const [documents, setDocuments] = useState(false);
   const [documentsData, setDocumentsData] = useState<DocumentItem[]>([]);
   const [panelHovered, setPanelHovered] = useState(false);
-  const { user, setUser } = useUser(); 
+  
+  const { user, setUser } = useUser();
 
-    useEffect(() => {
-        // Fetch user info from backend using the token in the cookie
-        const fetchUser = async () => {
-            try {
-                const response = await fetch("http://localhost:8000/api/user/me", {
-                    credentials: "include", // Ensures cookies are sent with the request
-                });
-                if (!response.ok) {
-                    throw new Error("Network response was not ok");
-                }
-                const data = await response.json();
-                setUser(data);
-            } catch (error) {
-                console.error("Error fetching user data:", error);
-            }
-        };
-        fetchUser();
-    }, [setUser]);
-
-    useEffect(() => {
-        if (user) {
-            localStorage.setItem("user", JSON.stringify(user));
-        } else {
-            localStorage.removeItem("user");
+  // Fetch stored messages if the user is signed in
+  useEffect(() => {
+    const fetchStoredMessages = async () => {
+      try {
+        const response = await fetch("http://localhost:8000/api/chat/messages", {
+          method: "GET",
+          credentials: "include", // Ensure cookies are sent
+          headers: {
+            "Content-Type": "application/json"
+          }
+        });
+        if (!response.ok) {
+          throw new Error("Failed to fetch messages");
         }
-    }, [user]);
+        const data = await response.json();
+        // Assume each document from backend contains fields: _id, user_message, bot_message, and timestamp.
+        // We'll convert each document into two messages (one for the user and one for the bot).
+        const loadedMessages: Message[] = [];
+        data.forEach((msg: any) => {
+          if (msg.user_message) {
+            loadedMessages.push({
+              id: msg._id, 
+              text: msg.user_message,
+              isUser: true,
+              timestamp: new Date(msg.timestamp),
+              isTyping: false,
+              isThinking: false,
+            });
+          }
+          if (msg.bot_message) {
+            loadedMessages.push({
+              id: msg._id + "_bot", // Create a unique id for the bot message
+              text: msg.bot_message,
+              isUser: false,
+              timestamp: new Date(msg.timestamp),
+              isTyping: false,
+              isThinking: false,
+            });
+          }
+        });
+        setMessages(loadedMessages);
+      } catch (error) {
+        console.error("Error fetching stored messages:", error);
+      }
+    };
 
-
+    if (user) {
+      fetchStoredMessages();
+    }
+  }, [user]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       const isNearRightEdge = window.innerWidth - e.clientX < 50;
       setPanelHovered(isNearRightEdge && documents);
     };
-  
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, [documents]);
-  
 
   useEffect(() => {
     const savedLang = localStorage.getItem('lang') === 'ar' ? 'ar' : 'en';
@@ -94,12 +115,6 @@ function ChatPage() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-
-  const toggleDocument = (index: number) => {
-    setDocumentsData(prev => prev.map((doc, i) => 
-      i === index ? { ...doc, expanded: !doc.expanded } : doc
-    ));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,9 +151,9 @@ function ChatPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: text,
-          documents: documents // Use local state instead of DOM attribute
-        }),
+           message: text,
+           documents: documents
+          }),
       });
   
       if (!response.ok) throw new Error("Network response was not ok");
@@ -199,7 +214,6 @@ function ChatPage() {
         } : msg
       ));
   
-      // Start typing effect
       let index = 0;
       const baseSpeed = 150;
       const speedFactor = Math.max(1, Math.log(fullText.length));
@@ -224,11 +238,9 @@ function ChatPage() {
           setIsSending(false);
         }
       }, typingSpeed);
-
-      // setMessages(prev => prev.filter(msg => msg.id !== thinkingMessageId));
-      // setIsSending(false);
     }
   };
+
   // Cancel the AI response typing without deleting the message
   const handleCancelSending = () => {
     const lastMessage = messages[messages.length - 1];
@@ -253,14 +265,18 @@ function ChatPage() {
     document.documentElement.setAttribute('lang', newLang);
   };
 
-
-
+  const toggleDocument = (index: number) => {
+    setDocumentsData(prev => prev.map((doc, i) => 
+      i === index ? { ...doc, expanded: !doc.expanded } : doc
+    ));
+  };
 
   return (
     <main className="container">
       <ThemeToggle />
       <LanguageToggle lang={lang} onToggle={handleLanguageChange} />
       <ProfileDropdown />
+
       <div className="chat-container">
         <Link href="/" className="title-link">
           <h1 className="title">{translations[lang].welcome}</h1>
@@ -276,22 +292,22 @@ function ChatPage() {
                   <PiStudentBold size={32} />
                 </div>
               )}
-            <div className="message-content">
-              {message.isThinking ? (
-                <div className="spinner"></div>
-              ) : (
-                <>
-                  {message.text}
-                  {message.isTyping && (
-                    <span className="typing-indicator">
-                      <span>.</span>
-                      <span>.</span>
-                      <span>.</span>
-                    </span>
-                  )}
-                </>
-              )}
-            </div>
+              <div className="message-content">
+                {message.isThinking ? (
+                  <div className="spinner"></div>
+                ) : (
+                  <>
+                    {message.text}
+                    {message.isTyping && (
+                      <span className="typing-indicator">
+                        <span>.</span>
+                        <span>.</span>
+                        <span>.</span>
+                      </span>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
           ))}
           <div ref={messagesEndRef} />
@@ -309,11 +325,10 @@ function ChatPage() {
               placeholder={translations[lang].typeMessage}
               className="chat-input"
             />
-            {/* Pass the isSending state and cancel handler */}
-            <ButtonHandler
-              lang={lang}
-              isSending={isSending}
-              onCancel={handleCancelSending}
+            <ButtonHandler 
+              lang={lang} 
+              isSending={isSending} 
+              onCancel={handleCancelSending} 
               documents={documents}
               onDocumentsToggle={() => setDocuments(!documents)}
             />
@@ -321,18 +336,12 @@ function ChatPage() {
         </div>
       </div>
 
-
       <div 
-        className={`documents-edge-trigger ${documents ? 'active' : ''}`}
-        onMouseEnter={() => setPanelHovered(true)}
-      />
-
-    <div 
-      className={`documents-panel ${documents ? 'visible' : ''}`}
-      style={{ opacity: panelHovered ? 1 : 0.3 }}
-    >
-      <h3>{translations[lang].documents}</h3>
-      <div className="documents-list">
+        className={`documents-panel ${documents ? 'visible' : ''}`}
+        style={{ opacity: panelHovered ? 1 : 0.3 }}
+      >
+        <h3>{translations[lang].documents}</h3>
+        <div className="documents-list">
           {documentsData.map((doc, index) => (
             <div 
               key={index} 
@@ -352,9 +361,8 @@ function ChatPage() {
               )}
             </div>
           ))}
-</div>
-    </div>
-
+        </div>
+      </div>
     </main>
   );
 }

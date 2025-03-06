@@ -14,23 +14,26 @@ function HomePage() {
     const [lang, setLang] = useState<'en' | 'ar'>('en');
     const { user, setUser } = useUser(); 
     useEffect(() => {
-        // Fetch user info from backend using the token in the cookie
         const fetchUser = async () => {
-            try {
-                const response = await fetch("http://localhost:8000/api/user/me", {
-                    credentials: "include", // Ensures cookies are sent with the request
-                });
-                if (!response.ok) {
-                    throw new Error("Network response was not ok");
-                }
-                const data = await response.json();
-                setUser(data);
-            } catch (error) {
-                console.error("Error fetching user data:", error);
+          try {
+            const response = await fetch("http://localhost:8000/api/user/me", {
+              credentials: "include", // Ensure cookies are sent with the request
+            });
+            if (response.ok) {
+              const data = await response.json();
+              setUser(data);
             }
+            // Optionally, you could handle specific status codes here (like 401)
+          } catch (error: any) {
+            // If error message is "Failed to fetch", ignore it
+            if (error.message && error.message !== "Failed to fetch") {
+              console.error("Error fetching user data:", error);
+            }
+            // Otherwise, silently ignore it (user likely isn't logged in)
+          }
         };
         fetchUser();
-    }, [setUser]);
+      }, [setUser]);
 
     useEffect(() => {
         if (user) {
@@ -71,9 +74,11 @@ function HomePage() {
                 <Link href="/test" className="primary-button">
                     {translations[lang].test}
                 </Link>
-                <Link href={`http://localhost:8000/api/user/auth/google`} className="secondary-button">
-                    {translations[lang].signIn}
-                </Link>
+                {!user && 
+                    <Link href={`http://localhost:8000/api/user/auth/google`} className="secondary-button">
+                        {translations[lang].signIn}
+                    </Link>
+            }               
             </div>
         </main>
         

@@ -24,16 +24,19 @@ const ProfileDropdown = () => {
 
   const handleLogout = async () => {
     try {
-      // Send logout request to backend
       const response = await fetch("http://localhost:8000/api/user/logout", {
         method: "POST",
-        credentials: "include", // Ensure cookies are included in the request
+        credentials: "include", // Make sure cookies are sent
       });
-
+  
       if (response.ok) {
+        // Clear user info from React state and localStorage
         setUser(null);
         localStorage.removeItem("user");
         setOpen(false);
+  
+        // Force a full reload to ensure every page gets the updated state
+        window.location.reload();
       } else {
         console.error("Logout failed");
       }

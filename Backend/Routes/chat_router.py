@@ -1,19 +1,17 @@
 from fastapi import APIRouter, Request
 from Controllers.chat_controller import *
 
-chatRouter = APIRouter()
+chatRouter = APIRouter(tags=["chat"])
 
-@chatRouter.post("/message", summary="Send a message")
-async def send_message(request: Request):
-    body = await request.json() 
-    return send_message_controller(body)
+@chatRouter.post("/messages", summary="Send messages")
+async def post_messages(payload: dict, access_token: str = Cookie(None)):
+    return await post_messages_controller(payload, access_token)
+
+
+@chatRouter.get("/messages", summary="get chat history")
+async def get_messages(access_token: str = Cookie(None)):
+    return await get_messages_controller(access_token)
 
 # Grouped routes related to chat history
-@chatRouter.get("/history", summary="Retrieve chat history")
-async def get_history(request: Request):
-    return get_history_controller(request)
 
-@chatRouter.post("/history", summary="Save chat history")
-async def save_history(request: Request):
-    return save_history_controller(request)
 
