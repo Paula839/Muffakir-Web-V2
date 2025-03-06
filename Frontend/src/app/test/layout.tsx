@@ -25,14 +25,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
+      <div
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
       <RouteProgress  />
         
         {children}
-      </body>
-    </html>
+      </div>
   );
 }

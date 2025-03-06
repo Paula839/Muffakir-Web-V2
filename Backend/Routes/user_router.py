@@ -1,19 +1,23 @@
-from fastapi import APIRouter, Request
+
+from fastapi import APIRouter, Cookie, Response
 from Controllers.user_controller import *
 
-userRouter = APIRouter()
+userRouter = APIRouter(tags=["user"])
 
-@userRouter.get("/signin", summary="Sign in with Google")
-async def signin(request: Request):
-    return await signin_controller(request)
+@userRouter.get("/auth/google")
+async def google_auth(request: Request):
+    return await google_signin_controller(request)
 
-@userRouter.get("/auth", summary="OAuth callback")
-async def auth(request: Request):
-    return await auth_controller(request)
+@userRouter.get("/auth/google/callback")
+async def google_callback(code: str, state: str = "/", response: Response = None):
+    
+    return await google_callback_controller(code, state, response)
 
-@userRouter.get("/logout", summary="Log out")
-async def signin(request: Request):
-    return logout_controller(request)
+@userRouter.get("/me")
+async def read_user(access_token: str = Cookie(None)):
 
+    return await read_user_controller(access_token)
 
-
+@userRouter.post("/logout")
+async def logout(response: Response):
+    return await logout_controller(response)

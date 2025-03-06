@@ -3,7 +3,7 @@
 import React from 'react';
 import { FaGlobe } from 'react-icons/fa';
 
-function LanguageToggle({ lang, onToggle }: { lang: string; onToggle: () => void }) {
+function LanguageToggle({ lang, onToggle }: { lang: 'en' | 'ar'; onToggle: () => void }) {
   return (
     <button 
       className="language-toggle"

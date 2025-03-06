@@ -1,9 +1,12 @@
+// chat/layout.tsx
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "../globals.css";
 import "./chat.css";
 import React from "react";
 import { RouteProgress } from "../../components/RouteProgress";
+import { UserProvider } from "../../context/UserContext";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -19,20 +22,18 @@ export const metadata: Metadata = {
   description: "Description",
 };
 
-export default function RootLayout({
+export default function ChatLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-       <RouteProgress  />
+    // Remove <html> and <body> here:
+    <div className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <UserProvider>
+        <RouteProgress />
         {children}
-
-      </body>
-    </html>
+      </UserProvider>
+    </div>
   );
 }

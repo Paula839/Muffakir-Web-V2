@@ -26,6 +26,12 @@ const translations = {
       option2c: "Earth",
       option2d: "Mars",
       guest: "Guest",
+      chatSessions: "Chat Sessions",
+      newChat: "New Chat",
+      newSession: "New Session",
+      openSidebar: "Open Sidebar",
+      closeSidebar: "Close Sidebar",
+      logout: "Logout",
     },
     ar: {
       welcome: "مرحبا بكم في مفكر",
@@ -54,6 +60,12 @@ const translations = {
       option2c: "الأرض",
       option2d: "المريخ",
       guest: "زائر",
+      chatSessions: "جلسات المحادثة",
+      newChat: "محادثة جديدة",
+      newSession: "جلسة جديدة",
+      openSidebar: "فتح القائمة الجانبية",
+      closeSidebar: "إغلاق القائمة الجانبية",
+      logout: "تسجيل الخروج",
     },
   };
 

@@ -10,11 +10,12 @@ type ButtonHandlerProps = {
   lang: 'en' | 'ar';
   isSending: boolean;
   onCancel: () => void;
+  documents: boolean;
+  onDocumentsToggle: () => void;
 };
 
-function ButtonHandler({ lang, isSending, onCancel }: ButtonHandlerProps) {
+function ButtonHandler({ lang, isSending, onCancel, documents, onDocumentsToggle  }: ButtonHandlerProps) {
   const [search, setSearch] = useState(false);
-  const [documents, setDocuments] = useState(false);
 
   useEffect(() => {
     document.documentElement.setAttribute('go-search', search ? 'on' : 'off');
@@ -34,9 +35,13 @@ function ButtonHandler({ lang, isSending, onCancel }: ButtonHandlerProps) {
         <button type="button" className="search-button" onClick={() => setSearch(!search)}>
           {translations[lang].search}
         </button>
-        <button type="button" className="documents-button" onClick={() => setDocuments(!documents)}>
-          {translations[lang].documents}
-        </button>
+        <button 
+        type="button" 
+        className={`documents-button ${documents ? 'active' : ''}`}
+        onClick={onDocumentsToggle}
+      >
+        {translations[lang].documents}
+      </button>
       </div>
     </>
   );
