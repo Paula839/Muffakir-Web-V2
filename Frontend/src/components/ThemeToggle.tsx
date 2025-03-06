@@ -5,7 +5,7 @@ import { FaMoon, FaSun } from 'react-icons/fa';
 
 function ThemeToggle() {
   const [mounted, setMounted] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(true);
 
   useEffect(() => {
     // This runs only on the client after mounting.

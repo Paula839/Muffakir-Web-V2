@@ -10,8 +10,21 @@ async def post_messages(payload: dict, access_token: str = Cookie(None)):
 
 @chatRouter.get("/messages", summary="get chat history")
 async def get_messages(access_token: str = Cookie(None)):
+    
     return await get_messages_controller(access_token)
 
-# Grouped routes related to chat history
+@chatRouter.get("/sessions", summary="Get chat sessions list")
+async def get_sessions(access_token: str = Cookie(None)):
+    return await get_messages_controller(access_token)
 
+@chatRouter.get("/sessions/{session_id}", summary="Get specific session messages")
+async def get_session_messages(session_id: str, access_token: str = Cookie(None)):
+    return await get_session_messages_controller(session_id, access_token)
 
+@chatRouter.post("/sessions", summary="Create new chat session")
+async def create_session(access_token: str = Cookie(None)):
+    return await create_session_controller(access_token)
+
+@chatRouter.delete("/sessions/{session_id}", summary="Delete a chat session")
+async def delete_session(session_id: str, access_token: str = Cookie(None)):
+    return await delete_session_controller(session_id, access_token)
