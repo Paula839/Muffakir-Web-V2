@@ -38,25 +38,24 @@ function ChatPage() {
   const [documentsData, setDocumentsData] = useState<DocumentItem[]>([]);
   const [panelHovered, setPanelHovered] = useState(false);
   
+  const [sessionsVisible, setSessionsVisible] = useState(false);
+  const [sessions, setSessions] = useState<Array<{id: string, title: string, timestamp: Date}>>([]);
+  const [selectedSession, setSelectedSession] = useState<string | null>(null);
+
   const { user, setUser } = useUser();
 
-  // Fetch stored messages if the user is signed in
   useEffect(() => {
     const fetchStoredMessages = async () => {
       try {
         const response = await fetch("http://localhost:8000/api/chat/messages", {
           method: "GET",
-          credentials: "include", // Ensure cookies are sent
+          credentials: "include",
           headers: {
             "Content-Type": "application/json"
           }
         });
-        if (!response.ok) {
-          throw new Error("Failed to fetch messages");
-        }
+        if (!response.ok) throw new Error("Failed to fetch messages");
         const data = await response.json();
-        // Assume each document from backend contains fields: _id, user_message, bot_message, and timestamp.
-        // We'll convert each document into two messages (one for the user and one for the bot).
         const loadedMessages: Message[] = [];
         data.forEach((msg: any) => {
           if (msg.user_message) {
@@ -71,7 +70,7 @@ function ChatPage() {
           }
           if (msg.bot_message) {
             loadedMessages.push({
-              id: msg._id + "_bot", // Create a unique id for the bot message
+              id: msg._id + "_bot",
               text: msg.bot_message,
               isUser: false,
               timestamp: new Date(msg.timestamp),
@@ -86,19 +85,21 @@ function ChatPage() {
       }
     };
 
-    if (user) {
-      fetchStoredMessages();
-    }
+    if (user) fetchStoredMessages();
   }, [user]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       const isNearRightEdge = window.innerWidth - e.clientX < 50;
-      setPanelHovered(isNearRightEdge && documents);
+      const isNearLeftEdge = e.clientX < 50;
+      setPanelHovered(
+        (isNearRightEdge && documents) || 
+        (isNearLeftEdge && sessionsVisible)
+      );
     };
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, [documents]);
+  }, [documents, sessionsVisible]);
 
   useEffect(() => {
     const savedLang = localStorage.getItem('lang') === 'ar' ? 'ar' : 'en';
@@ -107,14 +108,10 @@ function ChatPage() {
   }, []);
 
   const scrollToBottom = () => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   };
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  useEffect(() => { scrollToBottom(); }, [messages]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,7 +119,6 @@ function ChatPage() {
     if (!text) return;
     setIsSending(true);
   
-    // Add user message
     const userMessage: Message = {
       id: Date.now(),
       text: text,
@@ -134,7 +130,6 @@ function ChatPage() {
     setMessages(prev => [...prev, userMessage]);
     setInputText('');
   
-    // Add thinking message
     const thinkingMessageId = Date.now() + 1;
     const thinkingMessage: Message = {
       id: thinkingMessageId,
@@ -150,10 +145,7 @@ function ChatPage() {
       const response = await fetch("http://localhost:8000/api/chat/message", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-           message: text,
-           documents: documents
-          }),
+        body: JSON.stringify({ message: text, documents: documents }),
       });
   
       if (!response.ok) throw new Error("Network response was not ok");
@@ -166,7 +158,7 @@ function ChatPage() {
           expanded: false
         }))
       );
-      // Convert thinking message to typing message
+      
       setMessages(prev => prev.map(msg => 
         msg.id === thinkingMessageId ? {
           ...msg,
@@ -176,7 +168,6 @@ function ChatPage() {
         } : msg
       ));
   
-      // Start typing effect
       let index = 0;
       const baseSpeed = 150;
       const speedFactor = Math.max(1, Math.log(fullText.length));
@@ -204,7 +195,7 @@ function ChatPage() {
   
     } catch (error) {
       console.error("Error", error);
-      const fullText = "يوجد مشكلة في السرفر"
+      const fullText = "يوجد مشكلة في السرفر";
       setMessages(prev => prev.map(msg => 
         msg.id === thinkingMessageId ? {
           ...msg,
@@ -241,7 +232,6 @@ function ChatPage() {
     }
   };
 
-  // Cancel the AI response typing without deleting the message
   const handleCancelSending = () => {
     const lastMessage = messages[messages.length - 1];
     const isThinking = lastMessage?.isThinking;
@@ -251,9 +241,7 @@ function ChatPage() {
         clearInterval(typingIntervalRef.current);
         typingIntervalRef.current = null;
       }
-      if (isThinking) {
-        setMessages(prev => prev.filter(msg => msg.id !== lastMessage.id));
-      }
+      if (isThinking) setMessages(prev => prev.filter(msg => msg.id !== lastMessage.id));
       setIsSending(false);
     }
   };
@@ -276,6 +264,77 @@ function ChatPage() {
       <ThemeToggle />
       <LanguageToggle lang={lang} onToggle={handleLanguageChange} />
       <ProfileDropdown />
+
+      <button 
+        className="sidebar-toggle-button"
+        onClick={() => setSessionsVisible(!sessionsVisible)}
+        aria-label={sessionsVisible ? translations[lang].closeSidebar : translations[lang].openSidebar}
+        style={{
+          left: sessionsVisible ? `calc(300px + 1.5rem)` : '1.5rem',
+          transform: sessionsVisible ? 'rotate(180deg)' : 'none'
+        }}
+      >
+        {sessionsVisible ? (
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        ) : (
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M3 12h18M3 6h18M3 18h18"/>
+          </svg>
+        )}
+      </button>
+
+      <div 
+        className={`chat-session-sidebar ${sessionsVisible ? 'visible' : ''}`}
+        style={{ opacity: panelHovered ? 1 : 0.3 }}
+      >
+        <div className="session-sidebar-header">
+          <h3>{translations[lang].chatSessions}</h3>
+          <button 
+            className="new-session-button"
+            onClick={() => {
+              const newSession = {
+                id: Date.now().toString(),
+                title: translations[lang].newSession,
+                timestamp: new Date()
+              };
+              setSessions(prev => [newSession, ...prev]);
+              setSelectedSession(newSession.id);
+            }}
+            aria-label={translations[lang].newChat}
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+          </button>
+        </div>
+        <ul className="session-list">
+          {sessions.map(session => (
+            <li 
+              key={session.id}
+              className={`session-item ${selectedSession === session.id ? 'active' : ''}`}
+              onClick={() => setSelectedSession(session.id)}
+            >
+              <div className="session-info">
+                <div className="session-title">{session.title}</div>
+                <div className="session-time">
+                  {session.timestamp.toLocaleDateString()}
+                </div>
+              </div>
+              <button 
+                className="delete-session-button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSessions(prev => prev.filter(s => s.id !== session.id));
+                }}
+              >
+                ×
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
 
       <div className="chat-container">
         <Link href="/" className="title-link">

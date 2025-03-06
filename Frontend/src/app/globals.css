@@ -231,3 +231,17 @@ p {
   justify-content: center;
   font-size: 1.2rem;
 }
+
+.theme-toggle {
+  position: fixed;
+  top: 7.5rem; /* Changed from 4.5rem */
+  left: 1.5rem;
+  /* rest of the styles remain the same */
+}
+
+.language-toggle {
+  position: fixed;
+  top: 4.5rem; /* Changed from 1.5rem */
+  left: 1.5rem;
+  /* rest of the styles remain the same */
+}
