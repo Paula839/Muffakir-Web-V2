@@ -49,9 +49,38 @@ function ChatPage() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
 
-  const { user } = useUser();
 
   const [sessionsVisible, setSessionsVisible] = useState(true);
+
+  const { user, setUser } = useUser();
+
+   useEffect(() => {
+          const fetchUser = async () => {
+            try {
+              const response = await fetch("http://localhost:8000/api/user/me", {
+                credentials: "include",
+              });
+              if (response.ok) {
+                const data = await response.json();
+                setUser(data);
+              }
+            } catch (error: any) {
+              if (error.message && error.message !== "Failed to fetch") {
+                console.error("Error fetching user data:", error);
+              }
+            }
+          };
+          fetchUser();
+        }, [setUser]);
+  
+      useEffect(() => {
+          if (user) {
+              localStorage.setItem("user", JSON.stringify(user));
+          } else {
+              localStorage.removeItem("user");
+          }
+      }, [user]);
+  
 
   // Set initial visibility based on authentication status
   useEffect(() => {
@@ -553,11 +582,28 @@ function ChatPage() {
     );
   };
 
+
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const autoResizeTextarea = () => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${Math.min(
+        textareaRef.current.scrollHeight,
+        300 // Maximum height in pixels
+      )}px`;
+    }
+  };
+
+  useEffect(() => {
+    autoResizeTextarea();
+  }, [inputText]);
+
   return (
     <main className="container">
       <ThemeToggle />
       <LanguageToggle lang={lang} onToggle={handleLanguageChange} />
-      <ProfileDropdown />
+      <ProfileDropdown lang={lang}/>
 
       <button 
         className="sidebar-toggle-button"
@@ -660,6 +706,7 @@ function ChatPage() {
         <div className="chat-input-container">
           <form className="chat-form" onSubmit={handleSubmit}>
             <textarea
+            ref={textareaRef}
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={(e) => {

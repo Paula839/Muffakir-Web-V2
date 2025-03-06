@@ -12,14 +12,23 @@ TARGET_DIR = os.path.join(BACKEND_DIR, "Muffakir-V1-main")
 print("PAth = " + TARGET_DIR, flush=True)
 sys.path.append(TARGET_DIR)
 
+from app import get_rag_manager
+
 async def post_messages_controller(payload: dict, access_token: str = None):
     message_text = payload.get("message")
     documents_flag = payload.get("documents", False)
     session_id = payload.get("session_id")
 
+    response = get_rag_manager().generate_answer(message_text)
+
     # Generate bot response (for demonstration, reverse the message)
-    bot_response = message_text[::-1]
-    documents = [["Document Title", "Document Content"]] if documents_flag else []
+    message_response = response["answer"]
+    documents = []
+    if documents_flag:
+       retrieved_documents = response["retrieved_documents"]
+       source_metadata = response["source_metadata"]
+       for i in range(len(retrieved_documents)):
+           documents.append([source_metadata[i]["source"], retrieved_documents[i]]) 
 
     if access_token:
         print("Authenticated user detected", flush=True)
@@ -40,7 +49,7 @@ async def post_messages_controller(payload: dict, access_token: str = None):
                     "$push": {
                         "messages": {
                             "user_message": message_text,
-                            "bot_message": bot_response,
+                            "bot_message": message_response,
                             "timestamp": datetime.utcnow()
                         }
                     },
@@ -55,7 +64,7 @@ async def post_messages_controller(payload: dict, access_token: str = None):
                 raise HTTPException(status_code=404, detail="Session not found")
 
             return {
-                "response": bot_response,
+                "response": message_response,
                 "documents": documents,
                 "session_id": session_id
             }
@@ -68,7 +77,7 @@ async def post_messages_controller(payload: dict, access_token: str = None):
         # Guest mode: simulate title update and return response from backend.
         updated_title = message_text[:50] + ("..." if len(message_text) > 50 else "")
         return {
-            "response": bot_response,
+            "response": message_response,
             "documents": documents,
             "session_id": session_id,
             "title": updated_title

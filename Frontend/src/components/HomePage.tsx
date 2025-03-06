@@ -12,24 +12,23 @@ import ProfileDropdown from "./ProfileDropdown";
 
 function HomePage() {
     const [lang, setLang] = useState<'en' | 'ar'>('en');
-    const { user, setUser } = useUser(); 
+    const { user, setUser } = useUser();
+    const [clickedButton, setClickedButton] = useState<string | null>(null);
+
     useEffect(() => {
         const fetchUser = async () => {
           try {
             const response = await fetch("http://localhost:8000/api/user/me", {
-              credentials: "include", // Ensure cookies are sent with the request
+              credentials: "include",
             });
             if (response.ok) {
               const data = await response.json();
               setUser(data);
             }
-            // Optionally, you could handle specific status codes here (like 401)
           } catch (error: any) {
-            // If error message is "Failed to fetch", ignore it
             if (error.message && error.message !== "Failed to fetch") {
               console.error("Error fetching user data:", error);
             }
-            // Otherwise, silently ignore it (user likely isn't logged in)
           }
         };
         fetchUser();
@@ -51,7 +50,6 @@ function HomePage() {
 
     const updateDocumentAttributes = (language: string) => {
         document.documentElement.setAttribute('lang', language);
-        // document.documentElement.setAttribute('dir', language === 'ar' ? 'rtl' : 'ltr');
     };
 
     const handleLanguageChange = () => {
@@ -60,28 +58,44 @@ function HomePage() {
         localStorage.setItem('lang', newLang);
         updateDocumentAttributes(newLang);
     };
-    
+
+    const handleButtonClick = (buttonType: string) => {
+        setClickedButton(buttonType);
+        setTimeout(() => setClickedButton(null), 200);
+    };
+
     return (
         <main className="container">
             <ThemeToggle />
-            <ProfileDropdown />
+            <ProfileDropdown lang={lang}/>
             <LanguageToggle lang={lang} onToggle={handleLanguageChange} />
             <h1 className="title">{translations[lang].welcome}</h1>
             <div className="button-group">
-                <Link href="/chat" className="primary-button">
+                <Link 
+                    href="/chat" 
+                    className={`primary-button ${clickedButton === 'chat' ? 'clicked' : ''}`}
+                    onClick={() => handleButtonClick('chat')}
+                >
                     {translations[lang].useNow}
                 </Link>
-                <Link href="/test" className="primary-button">
+                <Link 
+                    href="/test" 
+                    className={`primary-button ${clickedButton === 'test' ? 'clicked' : ''}`}
+                    onClick={() => handleButtonClick('test')}
+                >
                     {translations[lang].test}
                 </Link>
                 {!user && 
-                    <Link href={`http://localhost:8000/api/user/auth/google`} className="secondary-button">
+                    <Link 
+                        href={`http://localhost:8000/api/user/auth/google`} 
+                        className={`secondary-button ${clickedButton === 'signin' ? 'clicked' : ''}`}
+                        onClick={() => handleButtonClick('signin')}
+                    >
                         {translations[lang].signIn}
                     </Link>
-            }               
+                }               
             </div>
         </main>
-        
     );
 }
 

@@ -1,6 +1,6 @@
 
 from google_auth_oauthlib.flow import Flow
-from fastapi import HTTPException, Response, Cookie
+from fastapi import HTTPException, Request, Response, Cookie
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 import jwt  
@@ -8,7 +8,9 @@ from Config.settings import SECRET_KEY, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, 
 from jwt import PyJWKClient
 
 
-async def google_signin_controller():
+async def google_signin_controller(request: Request):
+
+    redirect_path = request.query_params.get("redirect", "/")
 
     flow = Flow.from_client_config(
         client_config={
@@ -23,10 +25,13 @@ async def google_signin_controller():
         scopes=["openid", "https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email"],
         redirect_uri=GOOGLE_REDIRECT_URI,
     )
-    authorization_url, _ = flow.authorization_url(prompt="consent")
+    authorization_url, _ = flow.authorization_url(prompt="consent", state=redirect_path)
     return RedirectResponse(url=authorization_url)
 
-async def google_callback_controller(code: str, response:Response):
+async def google_callback_controller(code: str, state:str, response:Response):
+
+    safe_redirect = state if state.startswith("/") else "/"
+
     flow = Flow.from_client_config(
         client_config={
             "web": {
@@ -73,7 +78,7 @@ async def google_callback_controller(code: str, response:Response):
     token = jwt.encode(user_info, SECRET_KEY, algorithm="HS256")
 
     # Set the token in an HttpOnly cookie and redirect to frontend without query params
-    redirect_response = RedirectResponse(url="http://localhost:3000")
+    redirect_response = RedirectResponse(url=f"http://localhost:3000{safe_redirect}")
     redirect_response.set_cookie(
         key="access_token",
         value=token,

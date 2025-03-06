@@ -3,11 +3,14 @@
 import { useState, useRef, useEffect } from "react";
 import { useUser } from "../context/UserContext";
 import Link from "next/link";
+import translations from "../translations/translations"; // Add translation import
 
-const ProfileDropdown = () => {
+const ProfileDropdown = ({lang}: {lang: 'en' | 'ar'}) => {
   const { user, setUser } = useUser();
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Load language preference
 
   // Close the dropdown when clicking outside
   useEffect(() => {
@@ -17,28 +20,22 @@ const ProfileDropdown = () => {
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const currentPath = window.location.pathname;
   const handleLogout = async () => {
     try {
       const response = await fetch("http://localhost:8000/api/user/logout", {
         method: "POST",
-        credentials: "include", // Make sure cookies are sent
+        credentials: "include",
       });
   
       if (response.ok) {
-        // Clear user info from React state and localStorage
         setUser(null);
         localStorage.removeItem("user");
         setOpen(false);
-  
-        // Force a full reload to ensure every page gets the updated state
         window.location.reload();
-      } else {
-        console.error("Logout failed");
       }
     } catch (error) {
       console.error("Error logging out:", error);
@@ -47,27 +44,28 @@ const ProfileDropdown = () => {
 
   return (
     <div className="profile" ref={dropdownRef}>
-      {/* Display the user's name */}
-      <span className="profile-name">{user ? user.name : "Guest"}</span>
+      {/* Use translation for Guest */}
+      <span className="profile-name">{user ? user.name : translations[lang].guest}</span>
 
-      {/* Profile button with image/icon */}
       <button onClick={() => setOpen(prev => !prev)} className="profile-button">
-        {user && user.picture ? (
+        {user?.picture ? (
           <img src={user.picture} alt="Profile" className="profile-image" />
         ) : (
           <div className="profile-icon">
-            <span>{user && user.name ? user.name[0] : "G"}</span>
+            <span>{user ? user.name[0] : translations[lang].guest[0]}</span>
           </div>
         )}
       </button>
 
-      {/* Dropdown menu */}
       {open && (
         <div className="dropdown-menu">
           {user ? (
-            <button onClick={handleLogout}>Logout</button>
+            <button onClick={handleLogout}>{translations[lang].logout}</button>
           ) : (
-            <Link href="http://localhost:8000/api/user/auth/google">Sign In</Link>
+            
+            <Link href={`http://localhost:8000/api/user/auth/google?redirect=${encodeURIComponent(currentPath)}`}>
+              {translations[lang].signIn}
+            </Link>
           )}
         </div>
       )}

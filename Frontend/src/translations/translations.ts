@@ -31,6 +31,7 @@ const translations = {
       newSession: "New Session",
       openSidebar: "Open Sidebar",
       closeSidebar: "Close Sidebar",
+      logout: "Logout",
     },
     ar: {
       welcome: "مرحبا بكم في مفكر",
@@ -64,6 +65,7 @@ const translations = {
       newSession: "جلسة جديدة",
       openSidebar: "فتح القائمة الجانبية",
       closeSidebar: "إغلاق القائمة الجانبية",
+      logout: "تسجيل الخروج",
     },
   };
 

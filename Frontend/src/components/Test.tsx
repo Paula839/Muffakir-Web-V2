@@ -6,6 +6,8 @@ import translations from "../translations/translations";
 import { useEffect, useState } from "react";
 import UserProfile from "../components/UserProfile";
 import React from "react";
+import ProfileDropdown from "./ProfileDropdown";
+import { useUser } from "../context/UserContext";
 
 type Question = {
   id: number;
@@ -20,6 +22,36 @@ function TestPage() {
   const [userAnswers, setUserAnswers] = useState<string[]>([]);
   const [score, setScore] = useState<number | null>(null);
 
+
+  const { user, setUser } = useUser();
+  
+     useEffect(() => {
+            const fetchUser = async () => {
+              try {
+                const response = await fetch("http://localhost:8000/api/user/me", {
+                  credentials: "include",
+                });
+                if (response.ok) {
+                  const data = await response.json();
+                  setUser(data);
+                }
+              } catch (error: any) {
+                if (error.message && error.message !== "Failed to fetch") {
+                  console.error("Error fetching user data:", error);
+                }
+              }
+            };
+            fetchUser();
+          }, [setUser]);
+    
+        useEffect(() => {
+            if (user) {
+                localStorage.setItem("user", JSON.stringify(user));
+            } else {
+                localStorage.removeItem("user");
+            }
+        }, [user]);
+    
   // Sample questions - replace with your actual questions
   const questions: Question[] = [
     {
@@ -91,7 +123,7 @@ function TestPage() {
     <main className='container'>
       <ThemeToggle />
       <LanguageToggle lang={lang} onToggle={handleLanguageChange} />
-      <UserProfile guest={translations[lang].guest}/>
+      <ProfileDropdown lang={lang}/>
 
       <div className="test-container">
         <Link href="/" className="title-link">
