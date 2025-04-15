@@ -1,25 +1,21 @@
 
-from typing import Tuple, List, Dict, Optional, Any
 from QueryTransformer import *
 from LLMProvider import *
 from langchain.schema import Document
-from langchain.memory import ConversationBufferMemory
 
 from PromptManager import *
 
 from ChromaDBManager import *
 from RetrieveMethods import  *
-from CrewAgents import *
+
 from QueryDocumentProcessor import *
 
 from Reranker import *
-
-
+from HallucinationsCheck import *
 from typing import Tuple, List, Dict, Optional, Any
 
 from langchain.schema import Document
 from langchain.memory import ConversationBufferMemory
-
 
 
 class RAGPipelineManager:
@@ -37,7 +33,7 @@ class RAGPipelineManager:
         reranker: Optional[Reranker] = None,
         query_processor: Optional[QueryDocumentProcessor] = None,
         hallucination: Optional[HallucinationsCheck] = None,
-        crewagent: Optional[CrewAgents] = None,
+       
     ):
         self.db_manager = ChromaDBManager(
             path=db_path,
@@ -57,7 +53,7 @@ class RAGPipelineManager:
             llm_provider=llm_provider,
             prompt_manager=prompt_manager,
             reranker=reranker,
-            crewagent=crewagent,
+            
             hallucination=hallucination,
             query_processor=query_processor
         )
@@ -68,8 +64,9 @@ class RAGPipelineManager:
         self.llm_provider = llm_provider
         self.reranker = reranker
         self.db_path = db_path
+        self.query_transformer =query_transformer
 
-        
+
 
     def store_conversation(self, user_message: str, bot_response: str):
         print("STORE")
@@ -120,6 +117,9 @@ class RAGPipelineManager:
 
 
     def generate_answer(self, query: str) -> Dict[str, Any]:
+
+        ## query transformer 
+        #query = self.query_transformer.transform_query(query)
 
 
         return self.generation_pipeline.generate_response(query,type=self.retrive_method)

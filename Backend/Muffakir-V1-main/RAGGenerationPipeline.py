@@ -6,7 +6,6 @@ from RAGPipelineManager import RAGPipelineManager
 from DocumentRetriever import *
 from AnswerGenerator import *
 from QueryDocumentProcessor import *
-from CrewAgents import CrewAgents
 from HallucinationsCheck import *
 
 class RAGGenerationPipeline:
@@ -19,17 +18,17 @@ class RAGGenerationPipeline:
         prompt_manager: PromptManager,
         query_processor: QueryDocumentProcessor,
         hallucination : HallucinationsCheck,
-        crewagent: CrewAgents,
         reranker: Optional[Reranker] = None,
         k: int = 7
     ):
         self.pipeline_manager = pipeline_manager
         self.llm_provider = llm_provider
         self.query_processor = query_processor
-        self.crewagent = crewagent
         self.retriever = DocumentRetriever(pipeline_manager)
         self.generator = AnswerGenerator(llm_provider, prompt_manager)
         self.reranker = reranker or Reranker()
+        self.query_transformer = QueryTransformer(llm_provider, prompt_manager,prompt="search_query")
+
         self.hallucination = hallucination
         self.k = k
 
@@ -44,14 +43,15 @@ class RAGGenerationPipeline:
 
         print(chat_history)
 
-        print(f"input : {full_query}")
+        print(f"full_query : {full_query}")
 
 
-        query_type = self.query_processor.classify_query(full_query)
+        query_type = self.query_processor.classify_query(query=query)
 
-        history_type = self.query_processor.classify_query_with_history(chat_history,query)
+        history_type = self.query_processor.classify_query_with_history(chat_history,full_query)
 
         print("HISOTRY TYPE = ",history_type)
+        print("query_type = ",query_type)
 
         if history_type == "original":
 
@@ -64,7 +64,6 @@ class RAGGenerationPipeline:
 
 
 
-        db_path= self.pipeline_manager.db_path
 
         if query_type == "dummy_query":
             llm = self.llm_provider.get_llm()
@@ -93,15 +92,21 @@ class RAGGenerationPipeline:
             answer = self.generator.generate_answer(full_query, formatted_documents)
             #answer = "لا يمكنني الإجابة على هذا السؤال"
 
+            print("DOOOOOCSSSS ::: ",formatted_documents )
+
             if answer in "لا يمكنني الإجابة على هذا السؤال":
                 llm = self.llm_provider.get_llm()
+                optimized_query = self.query_transformer.transform_query(query)
+
+                print("optimized_query in no answer",optimized_query)
+
 
                 
-                response = llm.invoke(full_query)
+                response = llm.invoke(optimized_query)
                 answer = self.hallucination.check_answer(response.content)
 
 
-                print("HERE !!!!!")
+                print("HERE NO ANSWER !!!!!")
                 self.pipeline_manager.store_conversation(query, answer)
 
 
@@ -121,31 +126,6 @@ class RAGGenerationPipeline:
                     "retrieved_documents": [doc.page_content for doc in formatted_documents],
                     "source_metadata": [doc.metadata for doc in formatted_documents],
                 }
-
-        # elif query_type == "web_search":
-        #         self.crewagent.user_query = query
-
-        #         self.crewagent.setup()
-        #         self.crewagent.run()
-
-        #         answer_path = os.path.join("./research", "answer.txt")
-        #         with open(answer_path, 'r', encoding='utf-8') as f:
-        #             answer = f.read()
-
-
-        #         answer = self.hallucination.check_answer(answer)
-
-
-        #         self.pipeline_manager.store_conversation(query, answer.content)
-
-
-
-
-        #         return {
-        #             "answer": answer,
-        #             "retrieved_documents": [],
-        #             "source_metadata": [],
-        #         }
 
 
 

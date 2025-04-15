@@ -1,9 +1,10 @@
 DB.zip 
-research
-SummaryChunker.py
-RAGEvaluator.py
-ChunkEvaluator.py
 DB
 test.py
+test2.py
 __pycache__
+data
+TXT
+upload 
 
+"Frontend/muffakirv2/node_modules/" 

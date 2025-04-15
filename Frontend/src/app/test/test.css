@@ -120,3 +120,47 @@
     min-height: 300px; 
   }
   
+  /* test.css or add to chat.css */
+
+/* Loading Container */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+}
+
+/* Question Review */
+.question-review {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.question-review h4 {
+  margin: 0 0 0.5rem;
+}
+
+.question-review p {
+  margin: 0.3rem 0;
+}
+
+/* Back Button */
+.back-button {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.8rem 1.5rem;
+  background: var(--primary-color);
+  color: black;
+  border-radius: 50px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.back-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+}

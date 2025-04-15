@@ -20,10 +20,18 @@ type Message = {
   isThinking: boolean;
 };
 
+// Updated document types to handle resources
 type DocumentItem = {
+  type: string;
   title: string;
-  content: string;
+  content?: string;
+  links?: ResourceLink[];
   expanded: boolean;
+};
+
+type ResourceLink = {
+  title: string;
+  url: string;
 };
 
 type Session = {
@@ -42,6 +50,7 @@ function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [documents, setDocuments] = useState(false);
+  const [search, setSearch] = useState(false);
   const [documentsData, setDocumentsData] = useState<DocumentItem[]>([]);
   const [panelHovered, setPanelHovered] = useState(false);
 
@@ -53,6 +62,21 @@ function ChatPage() {
   const [sessionsVisible, setSessionsVisible] = useState(true);
 
   const { user, setUser } = useUser();
+
+  const [activeButton, setActiveButton] = useState<'search' | 'documents' | 'quiz' | 'none'>('none');
+  const handleButtonToggle = (button: 'search' | 'documents' | 'quiz' | 'none') => {
+    setActiveButton(button);
+    if (button === 'search' || button === 'documents') {
+      setDocuments(true); // Show the panel
+    } else {
+      setDocuments(false); // Hide the panel
+    }
+    // Update search state for backend
+    setSearch(button === 'search');
+  };
+
+  const [quiz, setQuiz] = useState(false);
+
 
    useEffect(() => {
           const fetchUser = async () => {
@@ -81,6 +105,7 @@ function ChatPage() {
           }
       }, [user]);
   
+      
 
   // Set initial visibility based on authentication status
   useEffect(() => {
@@ -239,110 +264,161 @@ function ChatPage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const text = inputText.trim();
-    if (!text) return;
-    setIsSending(true);
+// Inside ChatPage function
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  const text = inputText.trim();
+  if (!text) return;
+  setIsSending(true);
 
-    let currentSessionId = selectedSession;
+  let currentSessionId = selectedSession;
 
-    if (user) {
-      // Logged in user: create session and send message to the backend.
-      if (!currentSessionId) {
-        try {
-          const response = await fetch("http://localhost:8000/api/chat/sessions", {
-            method: "POST",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" }
-          });
-          if (!response.ok) throw new Error("Failed to create session");
-          const data = await response.json();
-          currentSessionId = data.session_id;
-          setSelectedSession(currentSessionId);
-          setSessions(prev => [
+  if (user) {
+    // Logged in user
+    if (!currentSessionId) {
+      try {
+        const response = await fetch("http://localhost:8000/api/chat/sessions", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+        });
+        if (!response.ok) throw new Error("Failed to create session");
+        const data = await response.json();
+        currentSessionId = data.session_id;
+        setSelectedSession(currentSessionId);
+        setSessions(prev => [
+          {
+            id: data.session_id,
+            title: data.title,
+            created_at: new Date(),
+            last_updated: new Date(),
+            message_count: 0,
+          },
+          ...prev,
+        ]);
+      } catch (error) {
+        console.error("Error creating session:", error);
+        setIsSending(false);
+        return;
+      }
+    }
+
+    // Add user message optimistically
+    const userMessage: Message = {
+      id: Date.now(),
+      text: text,
+      isUser: true,
+      timestamp: new Date(),
+      isTyping: false,
+      isThinking: false,
+    };
+    setMessages(prev => [...prev, userMessage]);
+    setInputText('');
+
+    // Add thinking indicator
+    const thinkingMessageId = Date.now() + 1;
+    const thinkingMessage: Message = {
+      id: thinkingMessageId,
+      text: '',
+      isUser: false,
+      timestamp: new Date(),
+      isTyping: false,
+      isThinking: true,
+    };
+    setMessages(prev => [...prev, thinkingMessage]);
+
+    try {
+      const response = await fetch("http://localhost:8000/api/chat/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          message: text,
+          documents: documents,
+          search: search,
+          quiz: activeButton === 'quiz', // Use activeButton
+          session_id: currentSessionId,
+        }),
+      });
+      if (!response.ok) throw new Error("Network response was not ok");
+      const data = await response.json();
+
+      // Process documents data
+      const processedDocs: DocumentItem[] = [];
+      if (data.documents && Array.isArray(data.documents)) {
+        data.documents.forEach((doc: any) => {
+          if (doc.type === "resources" && doc.links) {
+            processedDocs.push({
+              type: "resources",
+              title: doc.title || "Resources",
+              links: doc.links,
+              expanded: false,
+            });
+          } else if (doc.type === "document") {
+            processedDocs.push({
+              type: "document",
+              title: doc.title || "Document",
+              content: doc.content || "",
+              expanded: false,
+            });
+          } else if (doc.type === "quiz") {
+            processedDocs.push({
+              type: "quiz",
+              title: doc.title || "Quiz",
+              content: doc.content || "",
+              expanded: false,
+            });
+          }
+        });
+      }
+      setDocumentsData(processedDocs);
+
+      // Handle quiz redirection
+      if (activeButton === 'quiz') {
+        if (data.quiz_data && data.quiz_data.questions?.length > 0) {
+          localStorage.setItem('quizData', JSON.stringify(data.quiz_data));
+          window.location.href = '/test';
+        } else {
+          setMessages(prev => [
+            ...prev,
             {
-              id: data.session_id,
-              title: data.title,
-              created_at: new Date(),
-              last_updated: new Date(),
-              message_count: 0
+              id: Date.now(),
+              text: translations[lang].quizGenerationFailed,
+              isUser: false,
+              timestamp: new Date(),
+              isTyping: false,
+              isThinking: false,
             },
-            ...prev
           ]);
-        } catch (error) {
-          console.error("Error creating session:", error);
-          setIsSending(false);
-          return;
         }
+        setIsSending(false);
+        return;
       }
 
-      // Add user message optimistically.
-      const userMessage: Message = {
-        id: Date.now(),
-        text: text,
-        isUser: true,
-        timestamp: new Date(),
-        isTyping: false,
-        isThinking: false,
-      };
-      setMessages(prev => [...prev, userMessage]);
-      setInputText('');
+      // Update messages with bot response
+      setMessages(prev =>
+        prev.map(msg =>
+          msg.id === thinkingMessageId
+            ? {
+                ...msg,
+                isThinking: false,
+                isTyping: true,
+                text: '',
+              }
+            : msg
+        )
+      );
 
-      // Add thinking indicator.
-      const thinkingMessageId = Date.now() + 1;
-      const thinkingMessage: Message = {
-        id: thinkingMessageId,
-        text: '',
-        isUser: false,
-        timestamp: new Date(),
-        isTyping: false,
-        isThinking: true,
-      };
-      setMessages(prev => [...prev, thinkingMessage]);
+      // Typewriter effect
+      let index = 0;
+      const fullText = data.response;
+      const baseSpeed = 150;
+      const speedFactor = Math.max(1, Math.log(fullText.length));
+      const typingSpeed = baseSpeed / speedFactor;
 
-      try {
-        const response = await fetch("http://localhost:8000/api/chat/messages", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ 
-            message: text, 
-            documents: documents,
-            session_id: currentSessionId
-          }),
-        });
-        if (!response.ok) throw new Error("Network response was not ok");
-        const data = await response.json();
-
-        // Update documents.
-        setDocumentsData(
-          data.documents.map((doc: string[]) => ({
-            title: doc[0],
-            content: doc[1],
-            expanded: false
-          }))
-        );
-
-        // Update messages with bot response.
-        setMessages(prev => prev.map(msg => 
-          msg.id === thinkingMessageId ? {
-            ...msg,
-            isThinking: false,
-            isTyping: true,
-            text: ''
-          } : msg
-        ));
-
-        // Typewriter effect for bot response.
-        let index = 0;
-        const fullText = data.response;
-        const baseSpeed = 150;
-        const speedFactor = Math.max(1, Math.log(fullText.length));
-        const typingSpeed = baseSpeed / speedFactor;
-
-        typingIntervalRef.current = setInterval(() => {
-          setMessages(prev => prev.map(msg => {
+      typingIntervalRef.current = setInterval(() => {
+        setMessages(prev =>
+          prev.map(msg => {
             if (msg.id === thinkingMessageId) {
               const newText = fullText.substring(0, index + 1);
               return {
@@ -352,145 +428,182 @@ function ChatPage() {
               };
             }
             return msg;
-          }));
-          index++;
-          if (index >= fullText.length) {
-            clearInterval(typingIntervalRef.current!);
-            typingIntervalRef.current = null;
-            setIsSending(false);
-          }
-        }, typingSpeed);
+          })
+        );
+        index++;
+        if (index >= fullText.length) {
+          clearInterval(typingIntervalRef.current!);
+          typingIntervalRef.current = null;
+          setIsSending(false);
+        }
+      }, typingSpeed);
 
-        // Refresh sessions list.
-        const sessionsResponse = await fetch("http://localhost:8000/api/chat/sessions", {
-          method: "GET",
-          credentials: "include",
-        });
-        if (sessionsResponse.ok) {
-          const sessionsData = await sessionsResponse.json();
-          setSessions(sessionsData.map((session: any) => ({
+      // Refresh sessions list
+      const sessionsResponse = await fetch("http://localhost:8000/api/chat/sessions", {
+        method: "GET",
+        credentials: "include",
+      });
+      if (sessionsResponse.ok) {
+        const sessionsData = await sessionsResponse.json();
+        setSessions(
+          sessionsData.map((session: any) => ({
             id: session.session_id,
             title: session.title,
             created_at: new Date(session.created_at),
             last_updated: new Date(session.last_updated),
-            message_count: session.message_count
-          })));
-        }
-      } catch (error) {
-        console.error("Error", error);
-        // Remove optimistic messages on error.
-        setMessages(prev => prev.filter(msg => 
-          msg.id !== userMessage.id && msg.id !== thinkingMessageId
-        ));
-        const fullText = "يوجد مشكلة في السرفر";
-        setMessages(prev => [...prev, {
+            message_count: session.message_count,
+          }))
+        );
+      }
+    } catch (error) {
+      console.error("Error", error);
+      setMessages(prev =>
+        prev.filter(msg => msg.id !== userMessage.id && msg.id !== thinkingMessageId)
+      );
+      const fullText = "يوجد مشكلة في السرفر";
+      setMessages(prev => [
+        ...prev,
+        {
           id: Date.now(),
           text: fullText,
           isUser: false,
           timestamp: new Date(),
           isTyping: false,
           isThinking: false,
-        }]);
-        setIsSending(false);
-      }
-    } else {
-      // Guest mode: use a temporary session and send message to the backend.
-      if (!currentSessionId) {
-        const newSessionId = Date.now().toString();
-        currentSessionId = newSessionId;
-        setSelectedSession(newSessionId);
-        setSessions(prev => [
-          {
-            id: newSessionId,
-            title: "Guest Chat",
-            created_at: new Date(),
-            last_updated: new Date(),
-            message_count: 0
-          },
-          ...prev
-        ]);
-      }
+        },
+      ]);
+      setIsSending(false);
+    }
+  } else {
+    // Guest mode
+    if (!currentSessionId) {
+      const newSessionId = Date.now().toString();
+      currentSessionId = newSessionId;
+      setSelectedSession(newSessionId);
+      setSessions(prev => [
+        {
+          id: newSessionId,
+          title: "Guest Chat",
+          created_at: new Date(),
+          last_updated: new Date(),
+          message_count: 0,
+        },
+        ...prev,
+      ]);
+    }
 
-      // Add user message.
-      const userMessage: Message = {
-        id: Date.now(),
-        text: text,
-        isUser: true,
-        timestamp: new Date(),
-        isTyping: false,
-        isThinking: false,
-      };
-      setMessages(prev => [...prev, userMessage]);
-      setInputText('');
+    const userMessage: Message = {
+      id: Date.now(),
+      text: text,
+      isUser: true,
+      timestamp: new Date(),
+      isTyping: false,
+      isThinking: false,
+    };
+    setMessages(prev => [...prev, userMessage]);
+    setInputText('');
 
-      // Update guest session title if this is the first message.
-      setSessions(prevSessions =>
-        prevSessions.map(session => {
-          if (session.id === currentSessionId && session.title === "Guest Chat") {
-            const newTitle = text.length > 20 ? text.substring(0, 20) + "..." : text;
-            return { ...session, title: newTitle, message_count: session.message_count + 1 };
-          } else if (session.id === currentSessionId) {
-            return { ...session, message_count: session.message_count + 1 };
+    setSessions(prevSessions =>
+      prevSessions.map(session => {
+        if (session.id === currentSessionId && session.title === "Guest Chat") {
+          const newTitle = text.length > 20 ? text.substring(0, 20) + "..." : text;
+          return { ...session, title: newTitle, message_count: session.message_count + 1 };
+        } else if (session.id === currentSessionId) {
+          return { ...session, message_count: session.message_count + 1 };
+        }
+        return session;
+      })
+    );
+
+    const thinkingMessageId = Date.now() + 1;
+    const thinkingMessage: Message = {
+      id: thinkingMessageId,
+      text: '',
+      isUser: false,
+      timestamp: new Date(),
+      isTyping: false,
+      isThinking: true,
+    };
+    setMessages(prev => [...prev, thinkingMessage]);
+
+    try {
+      const response = await fetch("http://localhost:8000/api/chat/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "omit",
+        body: JSON.stringify({
+          message: text,
+          documents: documents,
+          search: search,
+          quiz: activeButton === 'quiz',
+          session_id: currentSessionId,
+        }),
+      });
+      if (!response.ok) throw new Error("Network response was not ok");
+      const data = await response.json();
+
+      // Process documents data
+      const processedDocs: DocumentItem[] = [];
+      if (data.documents && Array.isArray(data.documents)) {
+        data.documents.forEach((doc: any) => {
+          if (doc.type === "resources" && doc.links) {
+            processedDocs.push({
+              type: "resources",
+              title: doc.title || "Resources",
+              links: doc.links,
+              expanded: false,
+            });
+          } else if (doc.type === "document") {
+            processedDocs.push({
+              type: "document",
+              title: doc.title || "Document",
+              content: doc.content || "",
+              expanded: false,
+            });
+          } else if (doc.type === "quiz") {
+            processedDocs.push({
+              type: "quiz",
+              title: doc.title || "Quiz",
+              content: doc.content || "",
+              expanded: false,
+            });
           }
-          return session;
-        })
+        });
+      }
+      setDocumentsData(processedDocs);
+
+      // Handle quiz redirection
+      if (activeButton === 'quiz' && data.quiz_data) {
+        localStorage.setItem('quizData', JSON.stringify(data.quiz_data));
+        window.location.href = '/test';
+        setIsSending(false);
+        return;
+      }
+
+      // Update messages with bot response
+      setMessages(prev =>
+        prev.map(msg =>
+          msg.id === thinkingMessageId
+            ? {
+                ...msg,
+                isThinking: false,
+                isTyping: true,
+                text: '',
+              }
+            : msg
+        )
       );
 
-      // Add thinking indicator.
-      const thinkingMessageId = Date.now() + 1;
-      const thinkingMessage: Message = {
-        id: thinkingMessageId,
-        text: '',
-        isUser: false,
-        timestamp: new Date(),
-        isTyping: false,
-        isThinking: true,
-      };
-      setMessages(prev => [...prev, thinkingMessage]);
+      // Typewriter effect
+      let index = 0;
+      const fullText = data.response;
+      const baseSpeed = 150;
+      const speedFactor = Math.max(1, Math.log(fullText.length));
+      const typingSpeed = baseSpeed / speedFactor;
 
-      try {
-        // For guests, set credentials to "omit" so that no cookies are sent.
-        const response = await fetch("http://localhost:8000/api/chat/messages", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "omit",
-          body: JSON.stringify({ 
-            message: text, 
-            documents: documents,
-            session_id: currentSessionId
-          }),
-        });
-        if (!response.ok) throw new Error("Network response was not ok");
-        const data = await response.json();
-
-        // Update documents.
-        setDocumentsData(
-          data.documents.map((doc: string[]) => ({
-            title: doc[0],
-            content: doc[1],
-            expanded: false
-          }))
-        );
-
-        // Update messages with bot response.
-        setMessages(prev => prev.map(msg => 
-          msg.id === thinkingMessageId ? {
-            ...msg,
-            isThinking: false,
-            isTyping: true,
-            text: ''
-          } : msg
-        ));
-
-        // Typewriter effect for bot response.
-        let index = 0;
-        const fullText = data.response;
-        const baseSpeed = 150;
-        const speedFactor = Math.max(1, Math.log(fullText.length));
-        const typingSpeed = baseSpeed / speedFactor;
-
-        typingIntervalRef.current = setInterval(() => {
-          setMessages(prev => prev.map(msg => {
+      typingIntervalRef.current = setInterval(() => {
+        setMessages(prev =>
+          prev.map(msg => {
             if (msg.id === thinkingMessageId) {
               const newText = fullText.substring(0, index + 1);
               return {
@@ -500,40 +613,43 @@ function ChatPage() {
               };
             }
             return msg;
-          }));
-          index++;
-          if (index >= fullText.length) {
-            clearInterval(typingIntervalRef.current!);
-            typingIntervalRef.current = null;
-            setIsSending(false);
-          }
-        }, typingSpeed);
-      } catch (error) {
-        console.error("Error", error);
-        // Remove optimistic messages on error.
-        setMessages(prev => prev.filter(msg => 
-          msg.id !== userMessage.id && msg.id !== thinkingMessageId
-        ));
-        const fullText = "يوجد مشكلة في السرفر";
-        setMessages(prev => [...prev, {
+          })
+        );
+        index++;
+        if (index >= fullText.length) {
+          clearInterval(typingIntervalRef.current!);
+          typingIntervalRef.current = null;
+          setIsSending(false);
+        }
+      }, typingSpeed);
+    } catch (error) {
+      console.error("Error", error);
+      setMessages(prev =>
+        prev.filter(msg => msg.id !== userMessage.id && msg.id !== thinkingMessageId)
+      );
+      const fullText = "يوجد مشكلة في السرفر";
+      setMessages(prev => [
+        ...prev,
+        {
           id: Date.now(),
           text: fullText,
           isUser: false,
           timestamp: new Date(),
           isTyping: false,
           isThinking: false,
-        }]);
-        setIsSending(false);
-      }
+        },
+      ]);
+      setIsSending(false);
     }
-  };
+  }
+};
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       const isNearRightEdge = window.innerWidth - e.clientX < 50;
       const isNearLeftEdge = e.clientX < 50;
       setPanelHovered(
-        (isNearRightEdge && documents) || 
+        (isNearRightEdge && documents) ||
         (isNearLeftEdge && sessionsVisible)
       );
     };
@@ -582,6 +698,11 @@ function ChatPage() {
     );
   };
 
+  // Function to handle external link clicks
+  const handleResourceLinkClick = (url: string) => {
+    // You can add additional validation or tracking here if needed
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -706,7 +827,7 @@ function ChatPage() {
         <div className="chat-input-container">
           <form className="chat-form" onSubmit={handleSubmit}>
             <textarea
-            ref={textareaRef}
+              ref={textareaRef}
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={(e) => {
@@ -717,44 +838,74 @@ function ChatPage() {
               placeholder={translations[lang].typeMessage}
               className="chat-input"
             />
-            <ButtonHandler 
-              lang={lang} 
-              isSending={isSending} 
-              onCancel={handleCancelSending} 
-              documents={documents}
-              onDocumentsToggle={() => setDocuments(!documents)}
-            />
+          <ButtonHandler
+            lang={lang}
+            isSending={isSending}
+            onCancel={handleCancelSending}
+            documents={documents}
+            search={search}
+            quiz={quiz} // Add quiz prop
+            activeButton={activeButton}
+            onButtonToggle={handleButtonToggle}
+          />
           </form>
         </div>
       </div>
 
-      <div 
-        className={`documents-panel ${documents ? 'visible' : ''}`}
-        style={{ opacity: panelHovered ? 1 : 0.3 }}
+      <div
+  className={`documents-panel ${documents ? 'visible' : ''}`}
+  style={{ opacity: panelHovered ? 1 : 0.3 }}
+  data-mode={activeButton}
+>
+  <h3>
+    {activeButton === 'search'
+      ? translations[lang].searchResults
+      : activeButton === 'quiz'
+      ? translations[lang].quiz
+      : translations[lang].documents}
+  </h3>
+  <div className="documents-list">
+    {documentsData.map((doc, index) => (
+      <div
+        key={index}
+        className={`document-item ${doc.expanded ? 'expanded' : ''}`}
+        onClick={() => toggleDocument(index)}
+        data-type={doc.type}
       >
-        <h3>{translations[lang].documents}</h3>
-        <div className="documents-list">
-          {documentsData.map((doc, index) => (
-            <div 
-              key={index} 
-              className={`document-item ${doc.expanded ? 'expanded' : ''}`}
-              onClick={() => toggleDocument(index)}
-            >
-              <div className="document-header">
-                <h4>{doc.title}</h4>
-                <span className="toggle-icon">
-                  {doc.expanded ? '▲' : '▼'}
-                </span>
-              </div>
-              {doc.expanded && (
-                <div className="document-content">
-                  {doc.content}
-                </div>
-              )}
-            </div>
-          ))}
+        <div className="document-header">
+          <h4>{doc.title}</h4>
+          <span className="toggle-icon">{doc.expanded ? '▲' : '▼'}</span>
         </div>
+        {doc.expanded && (
+          <div className="document-content">
+            {doc.type === "resources" && doc.links ? (
+              <ul className="resource-links-list">
+                {doc.links.map((link, linkIndex) => (
+                  <li key={linkIndex} className="resource-link-item">
+                    <a
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="resource-link"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleResourceLinkClick(link.url);
+                      }}
+                    >
+                      {link.title}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              doc.content
+            )}
+          </div>
+        )}
       </div>
+    ))}
+  </div>
+</div>  
     </main>
   );
 }

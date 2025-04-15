@@ -32,6 +32,16 @@ const translations = {
       openSidebar: "Open Sidebar",
       closeSidebar: "Close Sidebar",
       logout: "Logout",
+      quiz: "Quiz",
+      searchResults: "Search Results",
+      loading: "Loading...",
+      yourAnswer: "Your Answer",
+      correctAnswer: "Correct Answer",
+      explanation: "Explanation",
+      backToChat: "Back to Chat", // Add or verify
+      noQuizAvailable: "No quiz available",
+      quizGenerationFailed: "Failed to generate quiz. Please try again.",
+      
     },
     ar: {
       welcome: "مرحبا بكم في مفكر",
@@ -66,6 +76,15 @@ const translations = {
       openSidebar: "فتح القائمة الجانبية",
       closeSidebar: "إغلاق القائمة الجانبية",
       logout: "تسجيل الخروج",
+      quiz: "اختبار",
+      searchResults: "نتائج البحث",
+      loading: "جارٍ التحميل...",
+      yourAnswer: "إجابتك",
+      correctAnswer: "الإجابة الصحيحة",
+      explanation: "التفسير",
+      backToChat: "العودة إلى الدردشة", // Add or verify
+      noQuizAvailable: "لا يوجد اختبار متاح",
+      quizGenerationFailed: "فشل في إنشاء الاختبار. حاول مرة أخرى.",
     },
   };
 

@@ -78,13 +78,13 @@ function HomePage() {
                 >
                     {translations[lang].useNow}
                 </Link>
-                <Link 
+                {/* <Link 
                     href="/test" 
                     className={`primary-button ${clickedButton === 'test' ? 'clicked' : ''}`}
                     onClick={() => handleButtonClick('test')}
                 >
                     {translations[lang].test}
-                </Link>
+                </Link> */}
                 {!user && 
                     <Link 
                         href={`http://localhost:8000/api/user/auth/google`} 

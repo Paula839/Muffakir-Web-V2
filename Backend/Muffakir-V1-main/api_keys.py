@@ -1,7 +1,5 @@
 api_keys_qroq = [
-    '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',
-    '5446ceba237f03b9cb362eac6e48b656e63a80cd606bf9015b363dc5a25ed943',
-    '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',
+    "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",
     "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",
     "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",
     "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",
@@ -30,17 +28,8 @@ api_keys_qroq = [
 
 
 api_keys_together=[
-    '68b8380ba6b42ab396852937334b65517a2a1a6a79b393f092fffc3ce13b9f03',
-    '51271dbba447f8febd9f27b06c8d46cf6f30fdf32828b5c6394ff41558f33d05',
-       "d1725901e16848b5dd30786e2ffbe0634ac971a9bd7284b7adee3212663a485a",
-    "614f41a469074b166d7688c66f0237f56c35162bde3fe963b3dd112a2c74c7b9",
-    "8adfaf7d55106e3f93536dd57b07c9a7e19db68f21bb68da16fb51980ab42b35",
-    "d6c68edcc40871855a2bbf37f81dc05df01379c8afe835f920eac9d44bb0216f",
-    "5f2166daf0d66e688e8c7b8735f9b1ea1e59c9e04c4d1c8876d24af40a944df0",
-"6622a4cb636179dc7b8835b6527818665125b1d3e4919e22eec72733bda88a46",
-"4b5ee7783da9d1661d57639b3b597fd4a802deb4edc2cbdf9b5764a8b3259c1f",
-"d7b7887162fda2190c6d2bf8bca6e2da08796293a3bc606d3667ba9a253c05bd"
-
-
-
+    "tgp_v1_tZD3diS9Qj7Y6__O4plxEoKsYQ06gQ0La4U1I_LFcIU"
 ]
+
+
+api_keys_open_router = ["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"]

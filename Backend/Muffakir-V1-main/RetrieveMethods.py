@@ -5,7 +5,6 @@ from langchain.retrievers import BM25Retriever
 from langchain.retrievers import EnsembleRetriever
 from langchain.retrievers import ContextualCompressionRetriever
 from langchain.retrievers.document_compressors import LLMChainExtractor
-from AgenticRAG import *
 from LLMProvider import *
 
 class RetrieveMethods:

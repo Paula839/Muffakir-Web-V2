@@ -68,11 +68,11 @@
   flex: 1;
   padding: 1rem;
   border: 2px solid var(--text-color);
-  border-radius: 30px;
+  border-radius: 40px;
   background: transparent;
   color: var(--text-color);
   font-size: 1rem;
-  padding-bottom: 100px;
+  padding-bottom: 110px;
   resize: none;
 
 }
@@ -92,7 +92,7 @@
   border-color: var(--primary-color);
 }
 
-.send-button, .search-button, .documents-button {
+.send-button, .search-button, .documents-button, .qui {
   
   padding: 1rem 1.1rem;
   background: var(--secondary-color);
@@ -150,10 +150,10 @@
   box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
 }
 
-[go-search='on'] .search-button, [go-documents='on'] .documents-button {
+/* [go-search='on'] .search-button, [go-documents='on'] .documents-button {
   background-color: var(--primary-color);
   color: black
-}
+} */
 
 .chat-messages {
   transition: all 0.3s ease;
@@ -710,4 +710,154 @@
 
 .new-session-button:hover svg {
   transform: rotate(90deg);
+}
+
+
+.resource-links-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.resource-link-item {
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.resource-link-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateX(5px);
+}
+
+.resource-link {
+  display: block;
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  padding: 0.25rem 0;
+}
+
+.resource-link:hover {
+  text-decoration: underline;
+}
+
+.resource-link::before {
+  content: "🔗 ";
+  margin-right: 0.25rem;
+}
+
+/* Improve documents panel for better distinction between document types */
+.document-item {
+  border-left: 3px solid transparent;
+}
+
+.document-item[data-type="document"] {
+  border-left-color: var(--secondary-color);
+}
+
+.document-item[data-type="resources"] {
+  border-left-color: var(--primary-color);
+}
+
+/* Make document title more prominent */
+.document-header h4 {
+  margin: 0;
+  font-weight: 500;
+  font-size: 1rem;
+  transition: color 0.2s ease;
+}
+
+.document-item:hover .document-header h4 {
+  color: var(--primary-color);
+}
+
+/* Improve scrollbar in document content */
+.document-content {
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-color) transparent;
+}
+
+.search-button.active {
+  background-color: var(--primary-color);
+  color: black;
+}
+
+.documents-button.active {
+  background-color: var(--primary-color);
+  color: black;
+}
+
+/* Add quiz-button styles */
+.quiz-button {
+  width: 80px; /* Match search-button width */
+  height: 50px; /* Match search-button height */
+  padding: 1rem 1.1rem;
+  background: var(--secondary-color);
+  color: var(--background-color);
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.quiz-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+}
+
+.quiz-button.active {
+  background-color: var(--primary-color);
+  color: black;
+}
+
+/* Update button-container to accommodate three buttons */
+.button-container {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+  margin-top: 1rem;
+  position: relative;
+  right: 52rem; /* Adjust if needed to align with new button */
+  bottom: 1rem;
+}
+
+/* Optional: Style document-item for quiz type */
+.document-item[data-type="quiz"] {
+  border-left-color: var(--secondary-color); /* Distinct color for quiz */
+}
+
+.chat-input {
+  flex: 1;
+  padding: 1rem;
+  border: 2px solid var(--text-color);
+  border-radius: 40px;
+  background: transparent;
+  color: var(--text-color);
+  font-size: 1.2rem; /* Increased from 1rem for bigger text */
+  font-weight: 500; /* Slightly bolder for clarity */
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; /* Modern font */
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.2); /* Subtle shadow for clarity */
+  padding-bottom: 110px; /* Keep existing padding */
+  resize: none;
+  transition: all 0.3s ease; /* Smooth transitions for focus effects */
+}
+
+.chat-input::placeholder {
+  font-style: italic;
+  color: var(--text-color);
+  opacity: 0.7; /* Slightly more visible placeholder */
+}
+
+.chat-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 8px rgba(0, 255, 136, 0.3); /* Cool glow effect on focus */
+  background: rgba(255, 255, 255, 0.05); /* Subtle background change for focus */
 }
