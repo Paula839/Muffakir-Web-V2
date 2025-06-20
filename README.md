@@ -1,1 +1,1 @@
-# Muffakir-Web-V2
+# Mufakkir-Web-V2
