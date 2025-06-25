@@ -8,21 +8,32 @@ from Database.mongodb import get_database
 from Config.settings import SECRET_KEY
 
 BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TARGET_DIR = os.path.join(BACKEND_DIR, "Muffakir-V1-main")
+TARGET_DIR = os.path.join(BACKEND_DIR, "Muffakir-V1-clean")
 print("PAth = " + TARGET_DIR, flush=True)
 sys.path.append(TARGET_DIR)
 
-from app import get_rag_manager, get_search_instance, get_final_search, get_quiz_instance
+from init import initialize_rag_manager, initialize_search, initialize_quiz, initialize_youtube_search, initialize_summarizer
+
+def to_arabic_digits(number: int) -> str:
+    western_to_arabic = str.maketrans("0123456789", "٠١٢٣٤٥٦٧٨٩")
+    return str(number).translate(western_to_arabic)
 
 async def post_messages_controller(payload: dict, access_token: str = None):
     message_text = payload.get("message")
     documents_flag = payload.get("documents", False)
     search_flag = payload.get("search", False)
     quiz_flag = payload.get("quiz", False)
+    youtube_flag = payload.get("youtubeSearch", False)
+    summarize_flag = payload.get("summary", False)
     session_id = payload.get("session_id")
 
     print("1000000000000")  # Payload received
     print(f"quiz_flag: {quiz_flag}")  # Debug quiz_flag
+    print(f"quiz_flag: {quiz_flag}")  # Debug quiz_flag
+    print(f"documents_flag: {documents_flag}")  # Debug quiz_flag
+    print(f"search_flag: {search_flag}")  # Debug quiz_flag
+    print(f"youtube_flag: {youtube_flag}")  # Debug quiz_flag
+    print(f"summarize_flag: {summarize_flag}")  # Debug quiz_flag
     if not message_text:
         print("1100000000000")  # Missing message_text
         raise HTTPException(status_code=400, detail="Message text is required")
@@ -35,14 +46,14 @@ async def post_messages_controller(payload: dict, access_token: str = None):
     if search_flag:
         print("2000000000000")  # Entering search_flag
         print("SEARCHING")
-        search_instance = get_search_instance()
+        search_instance = initialize_search()
         print("2100000000000")  # After get_search_instance
-        results = search_instance.deep_search(message_text)
+        results = search_instance.search(message_text)
         print("2200000000000")  # After deep_search
-        message_response = get_final_search(results, message_text)
+        message_response = results["answer"]
         print("2300000000000")  # After get_final_search
         
-        sources = results["data"].get("sources", [])
+        sources = results["sources"]
         print("2400000000000")  # After getting sources
         if sources:
             print("2500000000000")  # Sources exist
@@ -65,7 +76,7 @@ async def post_messages_controller(payload: dict, access_token: str = None):
         print("4000000000000")  # Entering quiz_flag branch
         try:
             print("4100000000000")  # Start of try block
-            quiz = get_quiz_instance()
+            quiz = initialize_quiz()
             print("4200000000000")  # After get_quiz_instance
             quiz_result = quiz.generate_quiz(query=message_text)
             print("4300000000000")  # After generate_quiz
@@ -108,15 +119,64 @@ async def post_messages_controller(payload: dict, access_token: str = None):
             raise HTTPException(status_code=500, detail=f"Failed to generate quiz: {str(e)}")
         print("5300000000000")  # After try-except (won’t reach if exception raised)
             
+    elif youtube_flag:
+        print("10000000000001")  # Entering youtube_flag
+        try:
+            youtube = initialize_youtube_search()
+            print("10000000000002")  # After initializing YouTube
+            search_result = youtube.youtube_search(message_text)
+            print("10000000000003")  # After performing YouTube search
+
+            num = 1
+            message_response = ""
+            for video in search_result:
+                title = video["title"]
+                description = video["description"]
+       
+                arabic_num = to_arabic_digits(num)
+                message_response += f"{arabic_num}:\n {title} \n {description} \n\n"
+                num += 1
+                print("10000000000004")  # Inside video loop
+                documents.append({
+                    "title": video["title"],
+                    "url": video["url"],
+                    "description": video["description"],
+                    "thumbnail": video["thumbnail"]
+                })
+
+            print("10000000000005")  # After appending YouTube document
+        except Exception as e:
+            print(f"Error during YouTube search: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"YouTube Search failed: {str(e)}")
+        
+    elif summarize_flag:
+        print("10000000000006")  # Entering summarize_flag
+        try:
+            summarizer = initialize_summarizer()
+            print("10000000000007")  # After initializing summarizer
+            summary = summarizer.summerize(message_text)
+            print("10000000000008")  # After summarizing
+
+            message_response = summary["summary"]
+            print("10000000000009")  # After appending summary document
+        except Exception as e:
+            print(f"Error during summarization: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Summarization failed: {str(e)}")
+
+    
     elif documents_flag:
         print("6000000000000")  # Entering documents_flag
-        response = get_rag_manager().generate_answer(message_text)
+        temp = initialize_rag_manager()
+        print("AFTER TEMPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP")
+        response = temp.generate_answer(query=message_text)
         print("6100000000000")  # After generate_answer
         message_response = response["answer"]
         print("6200000000000")  # After setting message_response
         retrieved_documents = response["retrieved_documents"]
         print("6300000000000")  # After getting retrieved_documents
         source_metadata = response["source_metadata"]
+        print(retrieved_documents)
+        print(source_metadata)
         print("6400000000000")  # After getting source_metadata
         for i in range(len(retrieved_documents)):
             print(f"6500000000000-{i}")  # Inside document loop
@@ -127,9 +187,10 @@ async def post_messages_controller(payload: dict, access_token: str = None):
             })
         print("6600000000000")  # After appending documents
 
+    
     else:
         print("7000000000000")  # Entering default branch
-        response = get_rag_manager().generate_answer(message_text)
+        response = initialize_rag_manager().generate_answer(message_text)
         print("7100000000000")  # After generate_answer
         message_response = response["answer"]
         print("7200000000000")  # After setting message_response

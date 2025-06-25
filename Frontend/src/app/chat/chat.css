@@ -60,8 +60,7 @@
   display: flex;
   align-items: flex-end;
   gap: 1rem;
-  width: 1150;
-
+  width: 1500;
 }
 
 .chat-input {
@@ -92,7 +91,7 @@
   border-color: var(--primary-color);
 }
 
-.send-button, .search-button, .documents-button, .qui {
+.send-button, .search-button, .documents-button, .quiz-button, .youtube-button, .summary-button {
   
   padding: 1rem 1.1rem;
   background: var(--secondary-color);
@@ -135,6 +134,16 @@
   height: 50px; /* Adjust to desired height */
 }
 
+.youtube-button {
+  width: 110px; /* Adjust to desired width */
+  height: 50px; /* Adjust to desired height */
+}
+
+.summary-button {
+  width: 110px; /* Adjust to desired width */
+  height: 50px; /* Adjust to desired height */
+}
+
 .send-button:hover {
   transform: scale(1.05);
   box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
@@ -149,6 +158,27 @@
   transform: scale(1.05);
   box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
 }
+
+.youtube-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+}
+
+.summary-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+}
+
+.youtube-button.active {
+  background-color: var(--primary-color);
+  color: black;
+}
+
+.summary-button.active {
+  background-color: var(--primary-color);
+  color: black;
+}
+
 
 /* [go-search='on'] .search-button, [go-documents='on'] .documents-button {
   background-color: var(--primary-color);
@@ -824,7 +854,7 @@
   align-items: center;
   margin-top: 1rem;
   position: relative;
-  right: 52rem; /* Adjust if needed to align with new button */
+  right: 58rem; /* Adjust if needed to align with new button */
   bottom: 1rem;
 }
 
@@ -860,4 +890,21 @@
   border-color: var(--primary-color);
   box-shadow: 0 0 8px rgba(0, 255, 136, 0.3); /* Cool glow effect on focus */
   background: rgba(255, 255, 255, 0.05); /* Subtle background change for focus */
+}
+
+
+.youtube-video {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.youtube-thumbnail {
+  width: 100%;
+  border-radius: 8px;
+}
+
+.youtube-description {
+  font-size: 0.85rem;
+  color: var(--text-color);
 }

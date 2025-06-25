@@ -1,7 +1,7 @@
 const translations = {
     en: {
-      welcome: "Welcome to Muffakir",
-      useNow: "Use Muffakir Now",
+      welcome: "Welcome to Mufakkir",
+      useNow: "Use Mufakkir Now",
       signIn: "Sign In",
       typeMessage: "Type your message here...",
       search: "Search",
@@ -41,6 +41,12 @@ const translations = {
       backToChat: "Back to Chat", // Add or verify
       noQuizAvailable: "No quiz available",
       quizGenerationFailed: "Failed to generate quiz. Please try again.",
+      youtubeSearch: "YouTube",
+      summary: "Summary", 
+      upload: "Upload",
+      youtubeResults: "YouTube Results",
+      summaryResults: "Summary",
+      uploadResults: "Upload Results",
       
     },
     ar: {
@@ -85,6 +91,12 @@ const translations = {
       backToChat: "العودة إلى الدردشة", // Add or verify
       noQuizAvailable: "لا يوجد اختبار متاح",
       quizGenerationFailed: "فشل في إنشاء الاختبار. حاول مرة أخرى.",
+      youtubeSearch: "يوتيوب",
+      summary: "ملخص",
+      upload: "رفع",
+      youtubeResults: "نتائج يوتيوب",
+      summaryResults: "الملخص",
+      uploadResults: "نتائج الرفع",
     },
   };
 
