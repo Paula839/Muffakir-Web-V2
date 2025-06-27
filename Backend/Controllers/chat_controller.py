@@ -28,7 +28,7 @@ async def post_messages_controller(payload: dict, access_token: str = None):
     session_id = payload.get("session_id")
 
     print("1000000000000")  # Payload received
-    print(f"quiz_flag: {quiz_flag}")  # Debug quiz_flag
+    print(f"message_text: {quiz_flag}")  # Debug quiz_flag
     print(f"quiz_flag: {quiz_flag}")  # Debug quiz_flag
     print(f"documents_flag: {documents_flag}")  # Debug quiz_flag
     print(f"search_flag: {search_flag}")  # Debug quiz_flag
@@ -154,9 +154,9 @@ async def post_messages_controller(payload: dict, access_token: str = None):
         try:
             summarizer = initialize_summarizer()
             print("10000000000007")  # After initializing summarizer
-            summary = summarizer.summerize(message_text)
+            summary = summarizer.summarize(message_text)
             print("10000000000008")  # After summarizing
-
+            print(summary)
             message_response = summary["summary"]
             print("10000000000009")  # After appending summary document
         except Exception as e:

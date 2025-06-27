@@ -53,14 +53,19 @@ class Summarizer:
         Returns:
             List of document chunks
         """
+        print(file_path)
         loader = PyPDFLoader(file_path)
+        print("PYDF DONE")
+        print(loader)
         pages = loader.load()
-        
+        print("LOAD DONE")
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap
         )
+        print("7asb")
         texts = text_splitter.split_documents(pages)
+        print("5lsana")
         return texts
     
     def adaptive_clustering(self, texts, min_clusters: int = 2, max_clusters: int = 5):
@@ -99,9 +104,12 @@ class Summarizer:
         """
         try:
             # Extract text chunks from PDF
+            print("LETS GOO")
             texts = self.extract(file_path)
+            print("DONE")
+            print("TEXT = ")
+            print(texts)
             num_chunks = len(texts)
-            
             # Check if document exceeds chunk limit
             if num_chunks > self.max_chunk_limit:
                 return {

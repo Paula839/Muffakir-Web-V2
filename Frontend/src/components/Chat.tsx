@@ -302,6 +302,9 @@ function ChatPage() {
 
 // Inside ChatPage function
 const handleSubmit = async (e: React.FormEvent) => {
+  if(isSending) {
+    return;
+  }
   e.preventDefault();
   const text = inputText.trim();
   if (!text) return;

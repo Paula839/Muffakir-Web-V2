@@ -81,9 +81,15 @@ function ButtonHandler({
 
       {/* Main send/cancel button */}
       <button
-        type={isSending ? "button" : "submit"}
+        type="submit"
         className="send-button"
-        onClick={isSending ? onCancel : undefined}
+        onClick={(e) => {
+          if (isSending) {
+            e.preventDefault(); // 👈 Prevent form submission
+            onCancel();         // 👈 Cancel typing
+          }
+          // Else: allow normal submit
+        }}
       >
         {isSending ? <FaStop /> : <FaArrowUpLong />}
       </button>
