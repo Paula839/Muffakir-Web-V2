@@ -1,7 +1,7 @@
 /* Chat Container */
 .chat-container {
   width: 100%;
-  max-width: 900px;
+  max-width: 1040px;
   height: 90vh;
   display: flex;
   flex-direction: column;
@@ -854,7 +854,7 @@
   align-items: center;
   margin-top: 1rem;
   position: relative;
-  right: 58rem; /* Adjust if needed to align with new button */
+  right: 66rem; /* Adjust if needed to align with new button */
   bottom: 1rem;
 }
 
