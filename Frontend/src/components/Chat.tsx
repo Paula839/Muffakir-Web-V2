@@ -97,10 +97,10 @@ function ChatPage() {
           setDocuments(true); // Show panel for YouTube results
           setYoutubeSearch(true);
           break;
-        case 'summary':
-          // setDocuments(true); // Show panel for summary
-          setSummary(true);
-          break;
+        // case 'summary':
+        //   // setDocuments(true); // Show panel for summary
+        //   setSummary(true);
+        //   break;
         case 'upload':
           setDocuments(true); // Show panel for upload results
           setUpload(true);

@@ -128,13 +128,13 @@ function ButtonHandler({
           {translations[lang].youtubeSearch}
         </button>
 
-        <button
+        {/* <button
           type="button"
           className={`summary-button ${activeButton === 'summary' ? 'active' : ''}`}
           onClick={handleSummaryClick}
         >
           {translations[lang].summary}
-        </button>
+        </button> */}
       </div>
     </>
   );
