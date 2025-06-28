@@ -27,6 +27,10 @@ type DocumentItem = {
   content?: string;
   links?: ResourceLink[];
   expanded: boolean;
+
+  url?: string;
+  description?: string;
+  thumbnail?: string;
 };
 
 type ResourceLink = {
@@ -53,26 +57,58 @@ function ChatPage() {
   const [search, setSearch] = useState(false);
   const [documentsData, setDocumentsData] = useState<DocumentItem[]>([]);
   const [panelHovered, setPanelHovered] = useState(false);
+  const [youtubeSearch, setYoutubeSearch] = useState(false);
+  const [summary, setSummary] = useState(false);
+  const [upload, setUpload] = useState(false);
 
 
   const [sessions, setSessions] = useState<Session[]>([]);
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
 
 
+  
+
   const [sessionsVisible, setSessionsVisible] = useState(true);
 
   const { user, setUser } = useUser();
 
-  const [activeButton, setActiveButton] = useState<'search' | 'documents' | 'quiz' | 'none'>('none');
-  const handleButtonToggle = (button: 'search' | 'documents' | 'quiz' | 'none') => {
+  const [activeButton, setActiveButton] = useState<'search' | 'documents' | 'quiz' | 'youtube' | 'summary' | 'upload' | 'none'>('none');
+  const handleButtonToggle = (button: 'search' | 'documents' | 'quiz' | 'youtube' | 'summary' | 'upload' | 'none') => {
     setActiveButton(button);
-    if (button === 'search' || button === 'documents') {
-      setDocuments(true); // Show the panel
-    } else {
-      setDocuments(false); // Hide the panel
-    }
-    // Update search state for backend
-    setSearch(button === 'search');
+    
+    setDocuments(false);
+    setSearch(false);
+    setYoutubeSearch(false);
+    setSummary(false);
+    setUpload(false);
+
+    switch (button) {
+        case 'search':
+          setDocuments(true);
+          setSearch(true);
+          break;
+        case 'documents':
+          setDocuments(true);
+          break;
+        case 'quiz':
+          // Quiz doesn't need panel
+          break;
+        case 'youtube':
+          setDocuments(true); // Show panel for YouTube results
+          setYoutubeSearch(true);
+          break;
+        case 'summary':
+          // setDocuments(true); // Show panel for summary
+          setSummary(true);
+          break;
+        case 'upload':
+          setDocuments(true); // Show panel for upload results
+          setUpload(true);
+          break;
+        default:
+          // All states already reset
+          break;
+      }
   };
 
   const [quiz, setQuiz] = useState(false);
@@ -336,7 +372,10 @@ const handleSubmit = async (e: React.FormEvent) => {
           message: text,
           documents: documents,
           search: search,
-          quiz: activeButton === 'quiz', // Use activeButton
+          quiz: activeButton === 'quiz',
+          youtubeSearch: activeButton === 'youtube',
+          summary: activeButton === 'summary',
+          upload: activeButton === 'upload',
           session_id: currentSessionId,
         }),
       });
@@ -368,10 +407,20 @@ const handleSubmit = async (e: React.FormEvent) => {
               content: doc.content || "",
               expanded: false,
             });
+          } else if (doc.url && doc.thumbnail && doc.description) {
+            processedDocs.push({
+              type: "youtube",
+              title: doc.title || "YouTube Video",
+              url: doc.url,
+              thumbnail: doc.thumbnail,
+              description: doc.description,
+              expanded: false,
+            });
           }
         });
       }
       setDocumentsData(processedDocs);
+
 
       // Handle quiz redirection
       if (activeButton === 'quiz') {
@@ -536,13 +585,15 @@ const handleSubmit = async (e: React.FormEvent) => {
           documents: documents,
           search: search,
           quiz: activeButton === 'quiz',
+          youtubeSearch: activeButton === 'youtube',
+          summary: activeButton === 'summary',
+          upload: activeButton === 'upload',
           session_id: currentSessionId,
         }),
       });
       if (!response.ok) throw new Error("Network response was not ok");
       const data = await response.json();
 
-      // Process documents data
       const processedDocs: DocumentItem[] = [];
       if (data.documents && Array.isArray(data.documents)) {
         data.documents.forEach((doc: any) => {
@@ -567,10 +618,20 @@ const handleSubmit = async (e: React.FormEvent) => {
               content: doc.content || "",
               expanded: false,
             });
+          } else if (doc.url && doc.thumbnail && doc.description) {
+            processedDocs.push({
+              type: "youtube",
+              title: doc.title || "YouTube Video",
+              url: doc.url,
+              thumbnail: doc.thumbnail,
+              description: doc.description,
+              expanded: false,
+            });
           }
         });
       }
       setDocumentsData(processedDocs);
+
 
       // Handle quiz redirection
       if (activeButton === 'quiz' && data.quiz_data) {
@@ -838,16 +899,19 @@ const handleSubmit = async (e: React.FormEvent) => {
               placeholder={translations[lang].typeMessage}
               className="chat-input"
             />
-          <ButtonHandler
-            lang={lang}
-            isSending={isSending}
-            onCancel={handleCancelSending}
-            documents={documents}
-            search={search}
-            quiz={quiz} // Add quiz prop
-            activeButton={activeButton}
-            onButtonToggle={handleButtonToggle}
-          />
+            <ButtonHandler
+              lang={lang}
+              isSending={isSending}
+              onCancel={handleCancelSending}
+              documents={documents}
+              search={search}
+              quiz={quiz}
+              youtubeSearch={youtubeSearch}
+              summary={summary}
+              upload={upload}
+              activeButton={activeButton}
+              onButtonToggle={handleButtonToggle}
+            />
           </form>
         </div>
       </div>
@@ -862,6 +926,12 @@ const handleSubmit = async (e: React.FormEvent) => {
       ? translations[lang].searchResults
       : activeButton === 'quiz'
       ? translations[lang].quiz
+      : activeButton === 'youtube'
+      ? translations[lang].youtubeResults
+      : activeButton === 'summary'
+      ? translations[lang].summaryResults
+      : activeButton === 'upload'
+      ? translations[lang].uploadResults
       : translations[lang].documents}
   </h3>
   <div className="documents-list">
@@ -876,32 +946,44 @@ const handleSubmit = async (e: React.FormEvent) => {
           <h4>{doc.title}</h4>
           <span className="toggle-icon">{doc.expanded ? '▲' : '▼'}</span>
         </div>
-        {doc.expanded && (
-          <div className="document-content">
-            {doc.type === "resources" && doc.links ? (
-              <ul className="resource-links-list">
-                {doc.links.map((link, linkIndex) => (
-                  <li key={linkIndex} className="resource-link-item">
-                    <a
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="resource-link"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleResourceLinkClick(link.url);
-                      }}
-                    >
-                      {link.title}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              doc.content
-            )}
-          </div>
-        )}
+{doc.expanded && (
+  <div className="document-content">
+    {doc.type === "resources" && doc.links ? (
+      <ul className="resource-links-list">
+        {doc.links.map((link, linkIndex) => (
+          <li key={linkIndex} className="resource-link-item">
+            <a
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="resource-link"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleResourceLinkClick(link.url);
+              }}
+            >
+              {link.title}
+            </a>
+          </li>
+        ))}
+      </ul>
+    ) : doc.type === "youtube" && doc.url ? (
+      <div className="youtube-video">
+        <a
+          href={doc.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <img src={doc.thumbnail} alt={doc.title} className="youtube-thumbnail" />
+          <p className="youtube-description">{doc.description}</p>
+        </a>
+      </div>
+    ) : (
+      doc.content
+    )}
+  </div>
+)}
       </div>
     ))}
   </div>
