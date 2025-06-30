@@ -1,67 +1,47 @@
-from TextProcessor.ArabicBookProcessor import *
-from RAGPipeline.RAGPipelineManager import *
-from VectorDB.ChromaDBManager import *
-from azure.ai.formrecognizer import DocumentAnalysisClient
-from azure.core.credentials import AzureKeyCredential
-from dotenv import load_dotenv
+from TextProcessor.ArabicBookProcessor import ArabicBookProcessor
+from RAGPipeline.RAGPipelineManager import RAGPipelineManager
+from VectorDB.ChromaDBManager import ChromaDBManager
 import os
+from dotenv import load_dotenv
+
 load_dotenv()
 
-
 new_db_path = os.getenv("NEW_DB_PATH")
-output_dir = os.getenv("OUTPUT_DIR")  
 
 class UploadFile:
-    def __init__(self, path: str, model_name: str = 'mohamed2811/Muffakir_Embedding'):
-        self.path = path  
-        
-        final_path = self.analyze_document(self.path) 
+    # print("YES???")
+    def __init__(self, file_path: str, model_name: str = 'mohamed2811/Muffakir_Embedding'):
+        # print("NOOO??")
+        """
+        Initialize with a single PDF file path.
+        """
+        self.file_path = file_path
+        self.model_name = model_name
 
-        self.processor = ArabicBookProcessor(final_path)
-
+        # Set up database manager
         self.db_manager = ChromaDBManager(
             path=new_db_path,
             collection_name="new_data",
-            model_name=model_name
+            model_name=self.model_name
         )
 
     def upload(self):
-        processed_docs = self.processor.process_documents()
+        # print("IM FROM UPLOAD")
+        """
+        Process the single PDF file and upload chunks to the vector DB.
+        """
+        if not self.file_path.lower().endswith('.pdf'):
+            raise ValueError("UploadFile only supports PDF files.")
+
+        # Process PDF
+        # print(self.file_path)
+        processor = ArabicBookProcessor(self.file_path)
+        processed_docs = processor.process_documents()
+        # print("LEEEEEEEEEEEEEEEEEe")
+        # print(processed_docs)
+        # Add to database
         self.db_manager.add_documents(processed_docs)
-        print("NEW PATH", new_db_path)
+        # print(f"Uploaded {len(processed_docs)} chunks from {os.path.basename(self.file_path)}")
+
+        # print("File uploaded to", new_db_path)
         return new_db_path
-
-    @staticmethod
-    def analyze_document(file_path):
-        endpoint = "https://documentsfree.cognitiveservices.azure.com/"
-        api_key = os.getenv("AZURE_API_KEY")
-
-        document_analysis_client = DocumentAnalysisClient(
-            endpoint=endpoint,
-            credential=AzureKeyCredential(api_key)
-        )
-        os.makedirs(output_dir, exist_ok=True)
-        
-        base_name = os.path.splitext(os.path.basename(file_path))[0]
-        output_file = os.path.join(output_dir, base_name + "_extracted.txt")
-
-        with open(file_path, "rb") as document:
-            poller = document_analysis_client.begin_analyze_document(
-                model_id="prebuilt-layout",
-                document=document)
-            
-            result = poller.result()
-
-            with open(output_file, "w", encoding="utf-8") as text_file:
-                print(f"Total pages: {len(result.pages)}", file=text_file)
-                
-                for page in result.pages:
-                    print(f"\nPage number: {page.page_number}\n", file=text_file)
-                    for line in page.lines:
-                        print(line.content, file=text_file)
-
-        return output_dir
-    
-
-
-

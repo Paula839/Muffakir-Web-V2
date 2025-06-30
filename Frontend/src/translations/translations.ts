@@ -46,7 +46,8 @@ const translations = {
       upload: "Upload",
       youtubeResults: "YouTube Results",
       summaryResults: "Summary",
-      uploadResults: "Upload Results",
+      uploadResults: "Files",
+      summarize: "Summarize"
       
     },
     ar: {
@@ -96,7 +97,9 @@ const translations = {
       upload: "رفع",
       youtubeResults: "نتائج يوتيوب",
       summaryResults: "الملخص",
-      uploadResults: "نتائج الرفع",
+      uploadResults: "الملفات",
+      summarize: "تلخيص"
+
     },
   };
 

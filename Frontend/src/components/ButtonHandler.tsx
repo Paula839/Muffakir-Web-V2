@@ -17,6 +17,7 @@ type ButtonHandlerProps = {
   upload: boolean;
   activeButton: 'search' | 'documents' | 'quiz' | 'youtube' | 'summary' | 'upload' | 'none';
   onButtonToggle: (button: 'search' | 'documents' | 'quiz' | 'youtube' | 'summary' | 'upload' | 'none') => void;
+  onUploadComplete: (doc: { file: File; title: string; content?: string }) => void;
 };
 
 function ButtonHandler({ 
@@ -30,7 +31,8 @@ function ButtonHandler({
   summary, 
   upload, 
   activeButton, 
-  onButtonToggle 
+  onButtonToggle,
+  onUploadComplete 
 }: ButtonHandlerProps) {
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -45,39 +47,46 @@ function ButtonHandler({
     }
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && file.type === "application/pdf") {
-      const formData = new FormData();
-      formData.append("file", file);
 
-      try {
-        const res = await fetch("http://localhost:8000/api/summarize", {
-          method: "POST",
-          body: formData,
-        });
+ const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const files = Array.from(e.target.files || []);
+  const pdfFiles = files.filter(file => file.type === "application/pdf");
 
-        if (!res.ok) throw new Error("Summarization failed");
-        const data = await res.json();
+  for (const file of pdfFiles) {
+    // Read file name and optionally the content
+    const reader = new FileReader();
+    reader.onload = () => {
+      const textContent = reader.result as string;
 
-        // TODO: Use this summary however you want (e.g., add to messages or documents)
-        console.log("Summary:", data.summary);
-      } catch (err) {
-        console.error("Upload failed:", err);
-      }
-    }
-  };
+      onUploadComplete({
+        title: file.name.replace(/\.pdf$/, ""), // Remove .pdf
+        content: "", // or you could add part of textContent here
+        file,
+      });
+    };
+    reader.readAsText(file); // Optional: read as text, or skip this if not needed
+  }
+
+  // Clear the input to allow re-uploading same files
+  if (fileInputRef.current) {
+    fileInputRef.current.value = '';
+  }
+};
+
+
+
 
   return (
     <>
       {/* Hidden file input for summary PDF upload */}
-      <input
-        type="file"
-        accept=".pdf"
-        ref={fileInputRef}
-        style={{ display: "none" }}
-        onChange={handleFileChange}
-      />
+     <input
+      type="file"
+      accept=".pdf"
+      multiple // ✅ Enable multiple files
+      ref={fileInputRef}
+      style={{ display: "none" }}
+      onChange={handleFileChange}
+    />
 
       {/* Main send/cancel button */}
       <button
@@ -127,6 +136,25 @@ function ButtonHandler({
         >
           {translations[lang].youtubeSearch}
         </button>
+
+        <button
+        type="button"
+        className={`upload-button ${activeButton === 'upload' ? 'active' : ''}`}
+        onClick={() => {
+          // if (activeButton === 'upload') {
+            // onButtonToggle('none');
+          // } else {
+            onButtonToggle('upload');
+            // 👇 Trigger the file input
+            setTimeout(() => {
+              fileInputRef.current?.click();
+            }, 0);
+          // }
+        }}
+      >
+        {translations[lang].upload}
+      </button>
+
 
         {/* <button
           type="button"

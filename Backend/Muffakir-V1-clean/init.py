@@ -37,6 +37,29 @@ _embedding_provider = EmbeddingProvider(
     batch_size=16,
 )
 
+from UploadFile.UploadFile import UploadFile
+
+def initialize_upload(
+    file_path: str,
+    model_name: str = settings.EMBEDDING_MODEL_NAME,
+) -> str:
+    """
+    Initialize and execute an UploadFile to process and upload a single file.
+
+    Args:
+        file_path: Path to the PDF file to upload.
+        model_name: Embedding model name to use in ChromaDB.
+
+    Returns:
+        The path to the vector database where data was uploaded.
+    """
+    print("IM HEREEEE")
+    uploader = UploadFile(
+        file_path=file_path,
+        model_name=model_name,
+    )
+    print("HERE DONE")
+    return uploader.upload()
 
 def initialize_rag_manager(
     db_path: str = settings.DB_PATH,

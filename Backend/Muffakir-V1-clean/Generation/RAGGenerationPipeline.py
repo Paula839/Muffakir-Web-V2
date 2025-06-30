@@ -57,7 +57,7 @@ class RAGGenerationPipeline:
         
         if answer in "لا يمكنني الإجابة على هذا السؤال":
             print("NO ANSWERRRRRRRRR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-            return self._perform_web_search_fallback(query)
+            return self._process_dummy_query(query)
         
         
         return {
@@ -104,11 +104,11 @@ class RAGGenerationPipeline:
     def generate_response(self, query: str) -> Dict[str, Any]:
         """Main entry point to generate a response"""
         # return self._process_vector_db_query(query)
-        query_type = self.query_processor.classify_query(query=query)
+        # query_type = self.query_processor.classify_query(query=query)
         
-        if query_type == QueryType.DUMMY_QUERY.value:
-            return self._process_dummy_query(query)
-        elif query_type == QueryType.VECTOR_DB.value:
-            return self._process_vector_db_query(query)
-        else:
-            raise ValueError(f"Unknown query type: {query_type}")
+        # if query_type == QueryType.DUMMY_QUERY.value:
+            # return self._process_dummy_query(query)
+        # query_type == QueryType.VECTOR_DB.value:
+        return self._process_vector_db_query(query)
+        # else:
+        #     raise ValueError(f"Unknown query type: {query_type}")

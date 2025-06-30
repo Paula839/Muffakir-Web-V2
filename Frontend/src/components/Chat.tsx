@@ -64,15 +64,35 @@ function ChatPage() {
 
   const [sessions, setSessions] = useState<Session[]>([]);
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
+  const [hoveredDoc, setHoveredDoc] = useState<number | null>(null);
 
 
-  
+  const [selectedSummaryFile, setSelectedSummaryFile] = useState<File | null>(null);
+
 
   const [sessionsVisible, setSessionsVisible] = useState(true);
 
   const { user, setUser } = useUser();
 
   const [activeButton, setActiveButton] = useState<'search' | 'documents' | 'quiz' | 'youtube' | 'summary' | 'upload' | 'none'>('none');
+
+
+const handleSummarizeClick = async (title: string) => {
+  const doc = documentsData.find(d => d.title === title);
+  if (!doc) return;
+
+  if (!selectedSummaryFile) {
+    console.warn("No file selected for summarization.");
+    return;
+  }
+
+  setInputText(""); // clear any existing message
+  setActiveButton("summary");
+  await handleSubmit(new Event("submit") as unknown as React.FormEvent); // trigger submit
+};
+
+
+
   const handleButtonToggle = (button: 'search' | 'documents' | 'quiz' | 'youtube' | 'summary' | 'upload' | 'none') => {
     setActiveButton(button);
     
@@ -97,10 +117,7 @@ function ChatPage() {
           setDocuments(true); // Show panel for YouTube results
           setYoutubeSearch(true);
           break;
-        // case 'summary':
-        //   // setDocuments(true); // Show panel for summary
-        //   setSummary(true);
-        //   break;
+
         case 'upload':
           setDocuments(true); // Show panel for upload results
           setUpload(true);
@@ -307,11 +324,12 @@ const handleSubmit = async (e: React.FormEvent) => {
   }
   e.preventDefault();
   const text = inputText.trim();
-  if (!text) return;
+  if (!text && !selectedSummaryFile) return;
   setIsSending(true);
 
   let currentSessionId = selectedSession;
 
+  
   if (user) {
     // Logged in user
     if (!currentSessionId) {
@@ -365,6 +383,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       isThinking: true,
     };
     setMessages(prev => [...prev, thinkingMessage]);
+
 
     try {
       const response = await fetch("http://localhost:8000/api/chat/messages", {
@@ -902,19 +921,30 @@ const handleSubmit = async (e: React.FormEvent) => {
               placeholder={translations[lang].typeMessage}
               className="chat-input"
             />
-            <ButtonHandler
-              lang={lang}
-              isSending={isSending}
-              onCancel={handleCancelSending}
-              documents={documents}
-              search={search}
-              quiz={quiz}
-              youtubeSearch={youtubeSearch}
-              summary={summary}
-              upload={upload}
-              activeButton={activeButton}
-              onButtonToggle={handleButtonToggle}
-            />
+        <ButtonHandler
+          lang={lang}
+          isSending={isSending}
+          onCancel={handleCancelSending}
+          documents={documents}
+          search={search}
+          quiz={quiz}
+          youtubeSearch={youtubeSearch}
+          summary={summary}
+          upload={upload}
+          activeButton={activeButton}
+          onButtonToggle={handleButtonToggle}
+          onUploadComplete={(doc) => {
+            setDocumentsData(prev => [
+              {
+                ...doc,
+                type: "document",
+                expanded: false,
+              },
+              ...prev
+            ]);
+            setSelectedSummaryFile(doc.file);
+          }}
+        />
           </form>
         </div>
       </div>
@@ -939,16 +969,35 @@ const handleSubmit = async (e: React.FormEvent) => {
   </h3>
   <div className="documents-list">
     {documentsData.map((doc, index) => (
-      <div
-        key={index}
-        className={`document-item ${doc.expanded ? 'expanded' : ''}`}
-        onClick={() => toggleDocument(index)}
-        data-type={doc.type}
-      >
-        <div className="document-header">
-          <h4>{doc.title}</h4>
-          <span className="toggle-icon">{doc.expanded ? '▲' : '▼'}</span>
-        </div>
+     <div
+  key={index}
+  className="document-item-wrapper"
+  onMouseEnter={() => setHoveredDoc(index)}
+  onMouseLeave={() => setHoveredDoc(null)}
+>
+  <div
+      className={`document-item ${doc.expanded ? 'expanded' : ''}`}
+      onClick={() => toggleDocument(index)}
+      data-type={doc.type}
+    >
+      {/* <!-- Inside this, keep your current document title/content/etc --> */}
+
+      {hoveredDoc === index && doc.type === "document" && (
+        <button
+          className="summarize-button"
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent expanding the document
+            handleSummarizeClick(doc.title);
+          }}
+        >
+          {translations[lang].summarize}
+        </button>
+      )}
+    </div>
+    <div className="document-header">
+      <h4>{doc.title}</h4>
+      <span className="toggle-icon">{doc.expanded ? '▲' : '▼'}</span>
+    </div>
 {doc.expanded && (
   <div className="document-content">
     {doc.type === "resources" && doc.links ? (

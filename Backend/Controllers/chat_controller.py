@@ -12,7 +12,7 @@ TARGET_DIR = os.path.join(BACKEND_DIR, "Muffakir-V1-clean")
 print("PAth = " + TARGET_DIR, flush=True)
 sys.path.append(TARGET_DIR)
 
-from init import initialize_rag_manager, initialize_search, initialize_quiz, initialize_youtube_search, initialize_summarizer
+from init import initialize_rag_manager, initialize_search, initialize_quiz, initialize_youtube_search, initialize_summarizer, initialize_upload
 
 def to_arabic_digits(number: int) -> str:
     western_to_arabic = str.maketrans("0123456789", "٠١٢٣٤٥٦٧٨٩")
@@ -26,6 +26,7 @@ async def post_messages_controller(payload: dict, access_token: str = None):
     youtube_flag = payload.get("youtubeSearch", False)
     summarize_flag = payload.get("summary", False)
     session_id = payload.get("session_id")
+    pdf_path = payload.get("pdf_path")
 
     print("1000000000000")  # Payload received
     print(f"message_text: {quiz_flag}")  # Debug quiz_flag
@@ -42,6 +43,17 @@ async def post_messages_controller(payload: dict, access_token: str = None):
     documents = []
     message_response = ""
     quiz_data = None
+
+    rag_manager = None
+
+    if pdf_path:
+        print("BEFORE")
+        new_db_path = initialize_upload(file_path=pdf_path)
+        print("AFTER")
+        rag_manager = initialize_rag_manager(db_path = new_db_path)
+        
+    else:
+        rag_manager = initialize_rag_manager()
 
     if search_flag:
         print("2000000000000")  # Entering search_flag
@@ -154,7 +166,7 @@ async def post_messages_controller(payload: dict, access_token: str = None):
         try:
             summarizer = initialize_summarizer()
             print("10000000000007")  # After initializing summarizer
-            summary = summarizer.summarize(message_text)
+            summary = summarizer.summarize(file_path=pdf_path)
             print("10000000000008")  # After summarizing
             print(summary)
             message_response = summary["summary"]
@@ -166,9 +178,9 @@ async def post_messages_controller(payload: dict, access_token: str = None):
     
     elif documents_flag:
         print("6000000000000")  # Entering documents_flag
-        temp = initialize_rag_manager()
+        # temp = initialize_rag_manager()
         print("AFTER TEMPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP")
-        response = temp.generate_answer(query=message_text)
+        response = rag_manager.generate_answer(query=message_text)
         print("6100000000000")  # After generate_answer
         message_response = response["answer"]
         print("6200000000000")  # After setting message_response
@@ -190,7 +202,7 @@ async def post_messages_controller(payload: dict, access_token: str = None):
     
     else:
         print("7000000000000")  # Entering default branch
-        response = initialize_rag_manager().generate_answer(message_text)
+        response = rag_manager.generate_answer(message_text)
         print("7100000000000")  # After generate_answer
         message_response = response["answer"]
         print("7200000000000")  # After setting message_response

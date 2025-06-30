@@ -60,7 +60,7 @@
   display: flex;
   align-items: flex-end;
   gap: 1rem;
-  width: 1500;
+  width: 1630;
 }
 
 .chat-input {
@@ -91,7 +91,7 @@
   border-color: var(--primary-color);
 }
 
-.send-button, .search-button, .documents-button, .quiz-button, .youtube-button, .summary-button {
+.send-button, .search-button, .documents-button, .quiz-button, .youtube-button, .summary-button, .upload-button {
   
   padding: 1rem 1.1rem;
   background: var(--secondary-color);
@@ -144,6 +144,11 @@
   height: 50px; /* Adjust to desired height */
 }
 
+.upload-button {
+  width: 110px; /* Adjust to desired width */
+  height: 50px; /* Adjust to desired height */
+}
+
 .send-button:hover {
   transform: scale(1.05);
   box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
@@ -164,6 +169,11 @@
   box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
 }
 
+.upload-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+}
+
 .summary-button:hover {
   transform: scale(1.05);
   box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
@@ -173,6 +183,12 @@
   background-color: var(--primary-color);
   color: black;
 }
+
+.upload-button.active {
+  background-color: var(--primary-color);
+  color: black;
+}
+
 
 .summary-button.active {
   background-color: var(--primary-color);
@@ -907,4 +923,29 @@
 .youtube-description {
   font-size: 0.85rem;
   color: var(--text-color);
+}
+
+
+.document-item-wrapper {
+  position: relative;
+}
+
+.summarize-button {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background-color: #4caf50;
+  color: white;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  opacity: 0.9;
+  z-index: 2;
+  transition: background 0.3s;
+}
+
+.summarize-button:hover {
+  background-color: #388e3c;
 }
